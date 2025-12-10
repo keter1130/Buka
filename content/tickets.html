@@ -464,25 +464,60 @@
         let html = '<div class="attachment-list">';
         attachments.forEach(att => {
             const isImage = att.contentType && att.contentType.startsWith('image/');
-            const downloadUrl = `${API_BASE_URL}/tickets/attachments/${att.id}/download`;
+            const downloadUrl = `${API_BASE_URL}/tickets/attachments/${att.id}/download?token=${CURRENT_JWT_TOKEN}`;
             if (isImage) {
                 html += `
                     <div class="attachment-item">
-                        <img src="${downloadUrl}?token=${CURRENT_JWT_TOKEN}" class="attachment-thumb" onclick="window.openLightbox('${downloadUrl}?token=${CURRENT_JWT_TOKEN}')" alt="${att.originalFileName}">
-                        <a href="javascript:void(0)" onclick="window.openLightbox('${downloadUrl}?token=${CURRENT_JWT_TOKEN}')">${att.originalFileName}</a>
+                        <img class="attachment-thumb auth-image" data-auth-url="${downloadUrl}" data-filename="${att.originalFileName}" alt="${att.originalFileName}" style="cursor: pointer;">
+                        <a href="javascript:void(0)" class="auth-image-link" data-auth-url="${downloadUrl}">${att.originalFileName}</a>
                     </div>
                 `;
             } else {
                 html += `
                     <div class="attachment-item">
                         <span>📄</span>
-                        <a href="${downloadUrl}?token=${CURRENT_JWT_TOKEN}" target="_blank">${att.originalFileName}</a>
+                        <a href="javascript:void(0)" class="auth-download-link" data-auth-url="${downloadUrl}" data-filename="${att.originalFileName}">${att.originalFileName}</a>
                     </div>
                 `;
             }
         });
         html += '</div>';
+        setTimeout(() => loadAuthImages(), 50);
         return html;
+    }
+
+    async function loadAuthImages() {
+        const images = document.querySelectorAll('.auth-image[data-auth-url]');
+        for (const img of images) {
+            const url = img.getAttribute('data-auth-url');
+            if (url && !img.src.startsWith('blob:')) {
+                await window.loadImageWithAuth(img, url);
+                img.onclick = () => window.openLightbox(img.src);
+            }
+        }
+        document.querySelectorAll('.auth-image-link[data-auth-url]').forEach(link => {
+            link.onclick = async () => {
+                const url = link.getAttribute('data-auth-url');
+                const blobUrl = await window.getAuthImageUrl(url);
+                if (blobUrl) window.openLightbox(blobUrl);
+            };
+        });
+        document.querySelectorAll('.auth-download-link[data-auth-url]').forEach(link => {
+            link.onclick = async () => {
+                const url = link.getAttribute('data-auth-url');
+                const filename = link.getAttribute('data-filename');
+                try {
+                    const response = await window.apiFetch(url);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = filename;
+                        a.click();
+                    }
+                } catch (e) { console.error('下載失敗:', e); }
+            };
+        });
     }
 
     window.openLightbox = function(imageUrl) {
