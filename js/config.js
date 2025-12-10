@@ -10,4 +10,12 @@
     }
     
     console.log('[Buka Config] API Base URL:', window.API_BASE_URL);
+    
+    window.apiFetch = function(url, options = {}) {
+        options.headers = {
+            'ngrok-skip-browser-warning': 'true',
+            ...(options.headers || {})
+        };
+        return fetch(url, options);
+    };
 })();

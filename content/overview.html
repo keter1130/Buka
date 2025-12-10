@@ -49,7 +49,7 @@
     async function fetchUserBalance() {
         const balanceElement = document.getElementById('user-balance');
         try {
-            const response = await fetch(`${API_BASE_URL}/points/balance`, {
+            const response = await apiFetch(`${API_BASE_URL}/points/balance`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -74,7 +74,7 @@
     async function fetchShieldCount() {
         const shieldElement = document.getElementById('shield-count');
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/my`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/my`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -100,7 +100,7 @@
     async function fetchPendingTickets() {
         const ticketElement = document.getElementById('pending-tickets');
         try {
-            const response = await fetch(`${API_BASE_URL}/tickets/my`, {
+            const response = await apiFetch(`${API_BASE_URL}/tickets/my`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 

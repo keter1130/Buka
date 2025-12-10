@@ -171,7 +171,7 @@
 
     async function loadCategories() {
         try {
-            const response = await fetch(`${API_BASE_URL}/tickets/categories`);
+            const response = await apiFetch(`${API_BASE_URL}/tickets/categories`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
@@ -196,7 +196,7 @@
     async function loadMyTickets() {
         const container = document.getElementById('tickets-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/tickets/my`, {
+            const response = await apiFetch(`${API_BASE_URL}/tickets/my`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -333,7 +333,7 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/tickets`, {
+            const response = await apiFetch(`${API_BASE_URL}/tickets`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -537,14 +537,19 @@
 
         try {
             let replyId = null;
-            if (replyContent) {
-                const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
+            
+            // Always create a reply if there's content OR files
+            // This ensures attachments are associated with a reply, not the ticket
+            const contentToSend = replyContent || (pendingFiles.length > 0 ? '(附件)' : '');
+            
+            if (contentToSend) {
+                const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ content: replyContent })
+                    body: JSON.stringify({ content: contentToSend })
                 });
                 const data = await response.json();
                 if (data.success && data.data) {
@@ -561,7 +566,7 @@
                 if (replyId) {
                     formData.append('replyId', replyId);
                 }
-                await fetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
                     body: formData
@@ -594,7 +599,7 @@
         modal.style.display = 'block';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -612,7 +617,7 @@
     
     async function markRepliesAsRead(ticketId) {
         try {
-            await fetch(`${API_BASE_URL}/tickets/${ticketId}/mark-read`, {
+            await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/mark-read`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
@@ -636,7 +641,7 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
+            const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,

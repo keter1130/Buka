@@ -947,7 +947,7 @@
                         displayMessage('正在註冊...', true);
 
                         try {
-                                const response = await fetch(`${API_BASE_URL}/users/register`, {
+                                const response = await apiFetch(`${API_BASE_URL}/users/register`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username, email, password })
@@ -989,7 +989,7 @@
                         displayMessage('正在登入...', true);
 
                         try {
-                                const response = await fetch(`${API_BASE_URL}/users/login`, {
+                                const response = await apiFetch(`${API_BASE_URL}/users/login`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ username, password })
@@ -1044,7 +1044,7 @@
                         displayMessage('正在使用 Token 呼叫保護接口...', true);
 
                         try {
-                                const response = await fetch(`${API_BASE_URL}/partner/balance`, {
+                                const response = await apiFetch(`${API_BASE_URL}/partner/balance`, {
                                         method: 'GET',
                                         headers: {
                                                 'Authorization': `Bearer ${token}`, 

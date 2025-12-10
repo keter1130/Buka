@@ -302,7 +302,7 @@
         
         try {
             const token = localStorage.getItem('jwtToken');
-            const response = await fetch(`${window.API_BASE_URL || '/api'}/admin/users/${userId}`, {
+            const response = await apiFetch(`${window.API_BASE_URL || '/api'}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -501,7 +501,7 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+            const response = await apiFetch(`${API_BASE_URL}/users/change-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -567,7 +567,7 @@
     async function loadUnreadCount(type) {
         try {
             const endpoint = type === 'admin' ? '/api/tickets/unread-count/admin' : '/api/tickets/unread-count';
-            const response = await fetch(endpoint, {
+            const response = await apiFetch(endpoint, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             
@@ -657,7 +657,7 @@
         const retryFn = () => loadContent(pageName, titleText, currentLink);
 
         try {
-            const response = await fetch(url + '?t=' + Date.now(), {
+            const response = await apiFetch(url + '?t=' + Date.now(), {
                 signal: controller.signal,
                 cache: 'no-store'
             });
@@ -723,7 +723,7 @@
         modal.style.display = 'block';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 

@@ -652,14 +652,19 @@
 
         try {
             let replyId = null;
-            if (replyContent) {
+            
+            // Always create a reply if there's content OR files
+            // This ensures attachments are associated with a reply, not the ticket
+            const contentToSend = replyContent || (pendingFiles.length > 0 ? '(附件)' : '');
+            
+            if (contentToSend) {
                 const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ content: replyContent, isInternal: isInternal })
+                    body: JSON.stringify({ content: contentToSend, isInternal: isInternal })
                 });
                 const data = await response.json();
                 if (data.success && data.data) {

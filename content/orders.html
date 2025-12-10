@@ -92,7 +92,7 @@
     async function loadBalance() {
         const balanceEl = document.getElementById('points-balance');
         try {
-            const response = await fetch(`${API_BASE_URL}/points/balance`, {
+            const response = await apiFetch(`${API_BASE_URL}/points/balance`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -111,7 +111,7 @@
     async function loadTransactions() {
         const container = document.getElementById('transactions-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/points/transactions`, {
+            const response = await apiFetch(`${API_BASE_URL}/points/transactions`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 

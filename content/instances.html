@@ -121,7 +121,7 @@
     async function loadMyShields() {
         const container = document.getElementById('shields-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/my`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/my`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -195,7 +195,7 @@
 
     async function loadProducts() {
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/products`);
+            const response = await apiFetch(`${API_BASE_URL}/shields/products`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) productsData = data.data || [];
@@ -275,7 +275,7 @@
                 url = `${API_BASE_URL}/shields/renew`;
                 body = { shieldId: id, months: selectedMonths };
             }
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -311,7 +311,7 @@
         document.getElementById('upgrade-confirm-btn').style.display = 'none';
         document.getElementById('upgrade-modal').style.display = 'block';
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/upgrade-options`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/${shieldId}/upgrade-options`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             const data = await response.json();
@@ -368,7 +368,7 @@
         this.disabled = true;
         this.textContent = '處理中...';
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/upgrade`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/upgrade`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ shieldId: upgradeContext.shieldId, newProductId: upgradeContext.selectedProductId })
@@ -390,7 +390,7 @@
 
     window.openControlPanelNewWindow = async function(shieldId, shieldName) {
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/control-panel`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/${shieldId}/control-panel`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             const data = await response.json();
@@ -407,7 +407,7 @@
 
     window.openControlPanelIframe = async function(shieldId, shieldName) {
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/control-panel`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/${shieldId}/control-panel`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             const data = await response.json();
@@ -448,7 +448,7 @@
         }
         
         try {
-            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/auto-renew`, {
+            const response = await apiFetch(`${API_BASE_URL}/shields/${shieldId}/auto-renew`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,

@@ -76,7 +76,7 @@
 
     async function loadProfile() {
         try {
-            const response = await fetch(`${API_BASE_URL}/users/profile`, {
+            const response = await apiFetch(`${API_BASE_URL}/users/profile`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -125,7 +125,7 @@
         const address = document.getElementById('profile-address').value.trim();
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/profile`, {
+            const response = await apiFetch(`${API_BASE_URL}/users/profile`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -173,7 +173,7 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+            const response = await apiFetch(`${API_BASE_URL}/users/change-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
