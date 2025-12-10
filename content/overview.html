@@ -1,0 +1,126 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+</style>
+
+<div class="content-card">
+    <h3 style="color:var(--gold);">歡迎回來，<span id="welcome-username">讀取中...</span></h3>
+    <p class="muted">這是您的會員儀表板概況。您可以在這裡一覽最新的服務狀態和重要資訊。</p>
+
+    <div class="summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px;">
+
+        <div class="card" style="padding: 20px; background-color: var(--card); border-radius: 8px; border-left: 5px solid var(--accent);">
+            <h4>🛡️ 我的布卡盾</h4>
+            <p style="font-size: 2em; font-weight: 700; color: var(--accent);" id="shield-count">載入中...</p>
+            <p class="muted">您目前持有的布卡盾數量。</p>
+        </div>
+
+        <div class="card" style="padding: 20px; background-color: var(--card); border-radius: 8px; border-left: 5px solid var(--gold);">
+            <h4>💰 點數餘額</h4>
+            <p style="font-size: 2em; font-weight: 700; color: var(--gold);" id="user-balance">載入中...</p>
+            <p class="muted">您的可用點數餘額。</p>
+        </div>
+
+        <div class="card" style="padding: 20px; background-color: var(--card); border-radius: 8px; border-left: 5px solid var(--accent2);">
+            <h4>📋 待處理工單</h4>
+            <p style="font-size: 2em; font-weight: 700; color: var(--accent2);" id="pending-tickets">載入中...</p>
+            <p class="muted">您的客服工單狀態。</p>
+        </div>
+
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background-color: var(--bg2); border-radius: 8px;">
+        <h4 style="color: var(--accent);">📢 最新公告</h4>
+        <p>歡迎使用布卡盾會員系統！如有任何問題，請透過「客服工單」與我們聯繫。</p>
+    </div>
+</div>
+
+<script>
+(function() {
+    const welcomeEl = document.getElementById('welcome-username');
+    const username = localStorage.getItem('username');
+    if (welcomeEl && username) {
+        welcomeEl.textContent = username;
+    }
+
+    fetchUserBalance();
+    fetchShieldCount();
+    fetchPendingTickets();
+
+    async function fetchUserBalance() {
+        const balanceElement = document.getElementById('user-balance');
+        try {
+            const response = await fetch(`${API_BASE_URL}/points/balance`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const balance = parseFloat(data.data.balance);
+                    balanceElement.textContent = balance.toLocaleString() + ' 點';
+                } else {
+                    balanceElement.textContent = '讀取失敗';
+                }
+            } else {
+                balanceElement.textContent = '讀取失敗';
+                balanceElement.style.color = '#ff3838';
+            }
+        } catch (error) {
+            balanceElement.textContent = '網路錯誤';
+            balanceElement.style.color = '#ff3838';
+        }
+    }
+
+    async function fetchShieldCount() {
+        const shieldElement = document.getElementById('shield-count');
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/my`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const count = data.data.length;
+                    shieldElement.textContent = count + ' 個';
+                    shieldElement.style.color = count > 0 ? 'var(--accent)' : 'var(--muted)';
+                } else {
+                    shieldElement.textContent = '0 個';
+                }
+            } else {
+                shieldElement.textContent = '讀取失敗';
+                shieldElement.style.color = '#ff3838';
+            }
+        } catch (error) {
+            shieldElement.textContent = '網路錯誤';
+            shieldElement.style.color = '#ff3838';
+        }
+    }
+
+    async function fetchPendingTickets() {
+        const ticketElement = document.getElementById('pending-tickets');
+        try {
+            const response = await fetch(`${API_BASE_URL}/tickets/my`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const pending = data.data.filter(t => t.status !== 'CLOSED').length;
+                    ticketElement.textContent = pending + ' 個';
+                    ticketElement.style.color = pending > 0 ? 'var(--accent2)' : 'var(--muted)';
+                } else {
+                    ticketElement.textContent = '0 個';
+                }
+            } else {
+                ticketElement.textContent = '讀取失敗';
+                ticketElement.style.color = '#ff3838';
+            }
+        } catch (error) {
+            ticketElement.textContent = '網路錯誤';
+            ticketElement.style.color = '#ff3838';
+        }
+    }
+})();
+</script>

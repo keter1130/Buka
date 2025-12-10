@@ -1,0 +1,256 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+    .balance-card { background: linear-gradient(135deg, var(--bg), var(--bg2)); border: 1px solid var(--border); border-radius: 16px; padding: 30px; margin-bottom: 30px; text-align: center; }
+    .balance-amount { font-size: 3em; font-weight: 700; color: var(--gold); margin: 15px 0; }
+    .balance-label { color: var(--muted); font-size: 14px; }
+    .transactions-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .transactions-table th, .transactions-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+    .transactions-table th { background: var(--bg); color: var(--accent); font-weight: 600; font-size: 13px; text-transform: uppercase; }
+    .tx-type { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .tx-recharge { background: rgba(80, 255, 150, 0.15); color: #50ff99; }
+    .tx-purchase { background: rgba(255, 150, 80, 0.15); color: #ffa050; }
+    .tx-adjustment { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
+    .amount-positive { color: #50ff99; }
+    .amount-negative { color: #ff5050; }
+    .form-input { padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+    .form-input[type="date"] { color-scheme: dark; appearance: auto; -webkit-appearance: auto; color: #eaf2f6 !important; background: #091218 !important; }
+    .form-input[type="date"]::-webkit-datetime-edit,
+    .form-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+    .form-input[type="date"]::-webkit-datetime-edit-text,
+    .form-input[type="date"]::-webkit-datetime-edit-month-field,
+    .form-input[type="date"]::-webkit-datetime-edit-day-field,
+    .form-input[type="date"]::-webkit-datetime-edit-year-field { color: #eaf2f6 !important; }
+    .form-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(100%) !important; cursor: pointer; opacity: 1 !important; width: 20px; height: 20px; }
+    .btn-primary { padding: 8px 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .pagination button { padding: 8px 14px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 6px; cursor: pointer; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pagination button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .pagination-info { color: var(--muted); font-size: 13px; }
+    @media (max-width: 768px) { .transactions-table { display: block; overflow-x: auto; } }
+</style>
+
+<div class="content-card">
+    <h3 style="margin-bottom: 25px;">我的點數</h3>
+    
+    <div class="balance-card">
+        <div class="balance-label">可用點數餘額</div>
+        <div class="balance-amount" id="points-balance">載入中...</div>
+        <p style="color: var(--muted); font-size: 14px; margin-top: 15px;">1 點 = NT$1</p>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <h4 style="margin: 0; color: var(--accent);">交易紀錄</h4>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input type="date" id="filter-start-date" class="form-input" style="padding: 8px 12px; max-width: 150px;" data-enhance="calendar">
+            <span style="color: var(--muted);">至</span>
+            <input type="date" id="filter-end-date" class="form-input" style="padding: 8px 12px; max-width: 150px;" data-enhance="calendar">
+            <select id="filter-page-size" class="form-input" style="padding: 8px 12px; max-width: 100px;">
+                <option value="10">10筆</option>
+                <option value="20" selected>20筆</option>
+                <option value="50">50筆</option>
+                <option value="100">100筆</option>
+            </select>
+            <button onclick="window.applyFilters()" class="btn-primary" style="padding: 8px 16px;">篩選</button>
+        </div>
+    </div>
+
+    <div id="transactions-container">
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <p style="color: var(--muted);">載入中...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let allTransactions = [];
+    let currentPage = 1;
+    let pageSize = 20;
+
+    initDefaultDates();
+    loadBalance();
+    loadTransactions();
+
+    function initDefaultDates() {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        const formatDate = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        document.getElementById('filter-start-date').value = formatDate(thirtyDaysAgo);
+        document.getElementById('filter-end-date').value = formatDate(today);
+    }
+
+    async function loadBalance() {
+        const balanceEl = document.getElementById('points-balance');
+        try {
+            const response = await fetch(`${API_BASE_URL}/points/balance`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const balance = parseFloat(data.data.balance);
+                    balanceEl.textContent = balance.toLocaleString() + ' 點';
+                }
+            }
+        } catch (error) {
+            balanceEl.textContent = '載入失敗';
+        }
+    }
+
+    async function loadTransactions() {
+        const container = document.getElementById('transactions-container');
+        try {
+            const response = await fetch(`${API_BASE_URL}/points/transactions`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    allTransactions = data.data || [];
+                    applyFiltersAndRender();
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    }
+
+    function applyFiltersAndRender() {
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        pageSize = parseInt(document.getElementById('filter-page-size').value) || 20;
+
+        let filtered = allTransactions;
+
+        if (startDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(tx => new Date(tx.transactionAt) >= start);
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(tx => new Date(tx.transactionAt) <= end);
+        }
+
+        currentPage = 1;
+        renderTransactions(filtered);
+    }
+
+    window.applyFilters = applyFiltersAndRender;
+
+    window.goToPage = function(page) {
+        currentPage = page;
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        
+        let filtered = allTransactions;
+        if (startDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(tx => new Date(tx.transactionAt) >= start);
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(tx => new Date(tx.transactionAt) <= end);
+        }
+        renderTransactions(filtered);
+    };
+
+    function renderTransactions(transactions) {
+        const container = document.getElementById('transactions-container');
+        
+        if (!transactions || transactions.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--muted);">尚無交易紀錄</p>';
+            return;
+        }
+
+        const totalPages = Math.ceil(transactions.length / pageSize);
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = startIdx + pageSize;
+        const pageData = transactions.slice(startIdx, endIdx);
+
+        const typeMap = {
+            'RECHARGE': { label: '儲值', class: 'tx-recharge' },
+            'PURCHASE': { label: '購買', class: 'tx-purchase' },
+            'RENEWAL': { label: '續費', class: 'tx-purchase' },
+            'AUTO_RENEW': { label: '自動續費', class: 'tx-purchase' },
+            'UPGRADE': { label: '升級', class: 'tx-purchase' },
+            'ADJUSTMENT': { label: '調整', class: 'tx-adjustment' },
+            'ADJUST_ADD': { label: '調整(增加)', class: 'tx-recharge' },
+            'ADJUST_SUB': { label: '調整(扣除)', class: 'tx-purchase' },
+            'REFUND': { label: '退款', class: 'tx-recharge' }
+        };
+
+        let html = `
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>交易編號</th>
+                        <th>類型</th>
+                        <th>金額</th>
+                        <th>餘額</th>
+                        <th>說明</th>
+                        <th>時間</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        pageData.forEach(tx => {
+            const typeInfo = typeMap[tx.transactionType] || { label: tx.transactionType, class: '' };
+            const amount = parseFloat(tx.amount);
+            const isPositive = amount >= 0;
+            const balanceAfter = parseFloat(tx.balanceAfter);
+            const txDate = new Date(tx.transactionAt).toLocaleString('zh-TW');
+
+            html += `
+                <tr>
+                    <td style="font-family: monospace; font-size: 13px;">${tx.transactionNo}</td>
+                    <td><span class="tx-type ${typeInfo.class}">${typeInfo.label}</span></td>
+                    <td class="${isPositive ? 'amount-positive' : 'amount-negative'}">${isPositive ? '+' : ''}${amount.toLocaleString()}</td>
+                    <td>${balanceAfter.toLocaleString()}</td>
+                    <td style="color: var(--muted);">${tx.description || '-'}</td>
+                    <td style="color: var(--muted); font-size: 13px;">${txDate}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+
+        if (totalPages > 1) {
+            html += `<div class="pagination">`;
+            html += `<button onclick="window.goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首頁</button>`;
+            html += `<button onclick="window.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一頁</button>`;
+            
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            
+            html += `<button onclick="window.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一頁</button>`;
+            html += `<button onclick="window.goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末頁</button>`;
+            html += `<span class="pagination-info">共 ${transactions.length} 筆，第 ${currentPage}/${totalPages} 頁</span>`;
+            html += `</div>`;
+        } else {
+            html += `<div class="pagination"><span class="pagination-info">共 ${transactions.length} 筆</span></div>`;
+        }
+
+        container.innerHTML = html;
+    }
+})();
+</script>

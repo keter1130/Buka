@@ -1,0 +1,878 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto; }
+    .modal-content { max-width: 950px; margin: 50px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+    .replies-container { flex: 1; max-height: 300px; overflow-y: auto; padding-right: 8px; }
+    .replies-container::-webkit-scrollbar { width: 8px; }
+    .replies-container::-webkit-scrollbar-track { background: var(--bg); border-radius: 4px; }
+    .replies-container::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 4px; }
+    .replies-container::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .filter-btn:hover { border-color: var(--accent); }
+    .ticket-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
+    .ticket-card:hover { border-color: var(--accent); }
+    .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .ticket-no { color: var(--muted); font-size: 13px; font-family: monospace; }
+    .ticket-status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .status-pending { background: rgba(255, 215, 0, 0.15); color: var(--gold); }
+    .status-processing { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
+    .status-closed { background: rgba(80, 255, 150, 0.15); color: #50ff99; }
+    .ticket-subject { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .ticket-meta { display: flex; gap: 20px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-primary { padding: 10px 20px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .reply-bubble { background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--gold); }
+    .reply-bubble.admin { background: rgba(0, 246, 255, 0.08); border-left-color: var(--accent); }
+    .reply-bubble.internal { background: rgba(255, 193, 7, 0.1); border-left-color: #ffc107; opacity: 0.85; }
+    .reply-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+    .reply-author { font-weight: 600; }
+    .reply-time { color: var(--muted); font-size: 12px; }
+    .internal-tag { background: rgba(255, 193, 7, 0.3); color: #ffc107; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
+    .read-logs-toggle { color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
+    .read-logs-list { margin-top: 8px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 12px; }
+    .quick-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .quick-link { color: var(--accent); font-size: 13px; cursor: pointer; text-decoration: underline; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .pagination button { padding: 8px 14px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 6px; cursor: pointer; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pagination button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .pagination-info { color: var(--muted); font-size: 13px; }
+    .date-input { padding: 8px 12px; background: rgba(10,22,28,0.55); border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; color: #eaf2f6 !important; cursor: pointer; color-scheme: dark; appearance: auto; -webkit-appearance: auto; }
+    .date-input::-webkit-datetime-edit,
+    .date-input::-webkit-datetime-edit-fields-wrapper,
+    .date-input::-webkit-datetime-edit-text,
+    .date-input::-webkit-datetime-edit-month-field,
+    .date-input::-webkit-datetime-edit-day-field,
+    .date-input::-webkit-datetime-edit-year-field { color: #eaf2f6 !important; }
+    .date-input::-webkit-calendar-picker-indicator { filter: invert(1) brightness(100%) !important; cursor: pointer; opacity: 1 !important; width: 20px; height: 20px; }
+    .page-size-select { padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+    .attachment-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .attachment-item { display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+    .attachment-item a { color: var(--accent); text-decoration: none; }
+    .attachment-item a:hover { text-decoration: underline; }
+    .attachment-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid var(--border); }
+    .file-upload-area { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+    .file-upload-area input[type="file"] { display: none; }
+    .file-upload-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 13px; }
+    .file-upload-btn:hover { border-color: var(--accent); }
+    .upload-preview { display: flex; gap: 8px; flex-wrap: wrap; }
+    .upload-preview-item { position: relative; }
+    .upload-preview-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+    .upload-preview-item .remove-btn { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #ff5050; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 1; }
+    .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+    .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+    .lightbox-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
+</style>
+
+<div class="content-card">
+    <h3 style="margin-bottom: 20px;">工單管理</h3>
+    
+    <div class="filter-bar">
+        <button class="filter-btn active" onclick="window.filterAdminTickets('all', this)">全部</button>
+        <button class="filter-btn" onclick="window.filterAdminTickets('PENDING', this)">待處理</button>
+        <button class="filter-btn" onclick="window.filterAdminTickets('PROCESSING', this)">處理中</button>
+        <button class="filter-btn" onclick="window.filterAdminTickets('CLOSED', this)">已結案</button>
+        <div style="flex: 1;"></div>
+        <input type="date" id="filter-start-date" class="date-input" data-enhance="calendar">
+        <span style="color: var(--muted);">至</span>
+        <input type="date" id="filter-end-date" class="date-input" data-enhance="calendar">
+        <select id="filter-page-size" class="page-size-select">
+            <option value="20">20筆</option>
+            <option value="50">50筆</option>
+            <option value="100">100筆</option>
+        </select>
+        <button onclick="window.applyAdminFilters()" class="filter-btn" style="background: var(--accent); color: var(--bg);">篩選</button>
+    </div>
+
+    <div id="tickets-container">
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <p style="color: var(--muted);">載入中...</p>
+        </div>
+    </div>
+</div>
+
+<div id="admin-ticket-detail-modal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <h3 style="color: var(--gold); margin: 0; font-size: 16px;" id="admin-detail-ticket-no"></h3>
+                <div id="admin-quick-links" class="quick-links" style="margin: 0; display: flex; gap: 10px;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                <span id="admin-ticket-created-time" style="color: var(--muted); font-size: 12px;"></span>
+                <button onclick="window.closeAdminTicketModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+        </div>
+        <div id="admin-ticket-detail-content"></div>
+    </div>
+</div>
+
+<div id="image-lightbox" class="lightbox" onclick="window.closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-image" src="" alt="預覽圖片">
+</div>
+
+<div id="member-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1002; overflow-y: auto;">
+    <div style="max-width: 550px; margin: 50px auto; padding: 25px; background: #0f2027; border-radius: 16px; border: 1px solid rgba(255,255,255,0.14);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #ffd700; margin: 0;">會員詳情</h3>
+            <button onclick="window.closeMemberDetailModal()" style="background: none; border: none; color: #a9bac6; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="member-detail-content"><p style="text-align: center; color: #a9bac6;">載入中...</p></div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let allTickets = [];
+    let currentFilter = 'all';
+    let currentTicketId = null;
+    let replyReadLogs = {};
+    let currentPage = 1;
+    let pageSize = 20;
+
+    window.showMemberDetail = async function(userId) {
+        const modal = document.getElementById('member-detail-modal');
+        const content = document.getElementById('member-detail-content');
+        modal.style.display = 'block';
+        content.innerHTML = '<p style="text-align: center; color: #a9bac6;">載入中...</p>';
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    renderMemberDetail(data.data);
+                } else {
+                    content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+                }
+            } else {
+                content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+            }
+        } catch (error) {
+            content.innerHTML = '<p style="color: #ff5050; text-align: center;">網路錯誤</p>';
+        }
+    };
+    
+    function renderMemberDetail(user) {
+        const content = document.getElementById('member-detail-content');
+        const isActive = user.status === 'ACTIVE';
+        const isAdmin = user.role === 'ADMIN';
+        const adminBadge = isAdmin ? '<span style="background: rgba(255,215,0,0.2); color: #ffd700; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">管理員</span>' : '';
+        
+        let actionButtonsHtml = '';
+        if (isAdmin) {
+            actionButtonsHtml = `
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="adjust-points-input" placeholder="點數調整 (正/負)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.14); background: #091218; color: #eaf2f6;">
+                    <button onclick="window.adjustMemberPoints(${user.id})" style="padding: 10px 20px; background: #00f6ff; color: #091218; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">調整</button>
+                </div>
+                <p style="color: #a9bac6; font-size: 12px; margin-top: 10px;">管理員帳號無法停用或重設密碼</p>
+            `;
+        } else {
+            actionButtonsHtml = `
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="adjust-points-input" placeholder="點數調整 (正/負)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.14); background: #091218; color: #eaf2f6;">
+                    <button onclick="window.adjustMemberPoints(${user.id})" style="padding: 10px 20px; background: #00f6ff; color: #091218; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">調整</button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="window.resetMemberPassword(${user.id})" style="flex: 1; padding: 8px 12px; background: transparent; border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; color: #eaf2f6; cursor: pointer;">重設密碼</button>
+                    <button onclick="window.toggleMemberStatus(${user.id}, ${isActive})" style="flex: 1; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; ${isActive ? 'background: rgba(255,80,80,0.15); color: #ff5050;' : 'background: rgba(80,255,150,0.15); color: #50ff99;'}">${isActive ? '停用帳號' : '啟用帳號'}</button>
+                </div>
+            `;
+        }
+        
+        content.innerHTML = `
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; justify-content: space-between;"><span style="color: #a9bac6;">會員編號</span><span style="color: #ffd700; font-weight: 600;">${user.memberNo || '-'}${adminBadge}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: #a9bac6;">帳號</span><span style="color: #eaf2f6;">${user.username || '-'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: #a9bac6;">電子郵件</span><span style="color: #eaf2f6;">${user.email || '-'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: #a9bac6;">點數餘額</span><span style="color: #ffd700;">${parseFloat(user.pointBalance || 0).toLocaleString()} 點</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: #a9bac6;">狀態</span><span style="${isActive ? 'color:#50ff99;' : 'color:#ff5050;'}">${isActive ? '啟用' : '停用'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span style="color: #a9bac6;">註冊時間</span><span style="color: #eaf2f6;">${user.createdAt ? new Date(user.createdAt).toLocaleString('zh-TW') : '-'}</span></div>
+            </div>
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.14); margin: 20px 0;">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="margin: 0; color: #00f6ff;">布卡盾</h4>
+                </div>
+                <div id="member-shields-list" style="color: #a9bac6; font-size: 14px;">載入中...</div>
+            </div>
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.14); margin: 20px 0;">
+            <div style="display: grid; gap: 10px;">
+                ${actionButtonsHtml}
+            </div>
+        `;
+        
+        loadMemberShields(user.id);
+    }
+    
+    async function loadMemberShields(userId) {
+        const container = document.getElementById('member-shields-list');
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data.length > 0) {
+                    let html = '<div style="display: grid; gap: 8px;">';
+                    data.data.slice(0, 3).forEach(shield => {
+                        const statusClass = shield.status === 'ACTIVE' ? 'color:#50ff99;' : 'color:#ff5050;';
+                        const statusText = shield.status === 'ACTIVE' ? '啟用' : '到期';
+                        html += `<div style="display: flex; justify-content: space-between; padding: 8px; background: #091218; border-radius: 6px;">
+                            <span style="color: #eaf2f6;">${shield.productName || shield.shieldNo || '-'}</span>
+                            <span style="${statusClass}">${statusText}</span>
+                        </div>`;
+                    });
+                    if (data.data.length > 3) {
+                        html += `<p style="text-align: center; font-size: 12px; color: #a9bac6;">還有 ${data.data.length - 3} 個...</p>`;
+                    }
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p style="color: #a9bac6;">尚無布卡盾</p>';
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+        }
+    }
+    
+    window.adjustMemberPoints = function(userId) {
+        const amount = document.getElementById('adjust-points-input').value;
+        if (!amount || isNaN(amount)) { alert('請輸入有效的點數'); return; }
+        const description = prompt('請輸入調整原因：');
+        if (!description) return;
+        requireUnlock(async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json', 'X-Unlock-Token': getUnlockToken() },
+                    body: JSON.stringify({ amount: parseFloat(amount), description })
+                });
+                const data = await response.json();
+                if (data.success) { alert('點數調整成功'); window.closeMemberDetailModal(); }
+                else { alert(data.message || '調整失敗'); }
+            } catch (error) { alert('網路連線異常'); }
+        });
+    };
+    
+    window.resetMemberPassword = function(userId) {
+        if (!confirm('確定要重設此會員的密碼嗎？')) return;
+        requireUnlock(async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const tempPassword = data.data?.tempPassword || data.tempPassword;
+                    if (tempPassword) { alert(`密碼已重設成功！\n\n臨時密碼：${tempPassword}`); }
+                    else { alert('密碼已重設，臨時密碼將發送至會員信箱'); }
+                    window.closeMemberDetailModal();
+                } else { alert(data.message || '重設失敗'); }
+            } catch (error) { alert('網路連線異常'); }
+        });
+    };
+    
+    window.toggleMemberStatus = function(userId, currentlyActive) {
+        const action = currentlyActive ? '停用' : '啟用';
+        if (!confirm(`確定要${action}此會員嗎？`)) return;
+        requireUnlock(async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
+                });
+                const data = await response.json();
+                if (data.success) { alert(`會員已${action}`); window.showMemberDetail(userId); }
+                else { alert(data.message || `${action}失敗`); }
+            } catch (error) { alert('網路連線異常'); }
+        });
+    };
+    
+    window.closeMemberDetailModal = function() {
+        document.getElementById('member-detail-modal').style.display = 'none';
+    };
+
+    initDefaultDates();
+    loadAllTickets();
+
+    function initDefaultDates() {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        const formatDate = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        document.getElementById('filter-start-date').value = formatDate(thirtyDaysAgo);
+        document.getElementById('filter-end-date').value = formatDate(today);
+    }
+
+    async function loadAllTickets() {
+        const container = document.getElementById('tickets-container');
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    allTickets = data.data || [];
+                    currentPage = 1;
+                    applyFiltersAndRender();
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    }
+
+    window.applyAdminFilters = function() {
+        currentPage = 1;
+        applyFiltersAndRender();
+    };
+
+    window.goToPage = function(page) {
+        currentPage = page;
+        applyFiltersAndRender();
+    };
+
+    function applyFiltersAndRender() {
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        pageSize = parseInt(document.getElementById('filter-page-size').value) || 20;
+
+        let filtered = allTickets;
+
+        if (currentFilter !== 'all') {
+            filtered = filtered.filter(t => t.status === currentFilter);
+        }
+        if (startDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(t => new Date(t.createdAt) >= start);
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(t => new Date(t.createdAt) <= end);
+        }
+
+        renderTickets(filtered);
+    }
+
+    function renderTickets(tickets) {
+        const container = document.getElementById('tickets-container');
+        
+        if (!tickets || tickets.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 60px; margin-bottom: 15px;">📋</div>
+                    <h4 style="color: var(--gold);">沒有找到工單</h4>
+                    <p style="color: var(--muted);">目前沒有符合條件的工單</p>
+                </div>
+            `;
+            return;
+        }
+
+        const totalPages = Math.ceil(tickets.length / pageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = startIdx + pageSize;
+        const pageData = tickets.slice(startIdx, endIdx);
+
+        const statusMap = {
+            'PENDING': { label: '待處理', class: 'status-pending' },
+            'PROCESSING': { label: '處理中', class: 'status-processing' },
+            'CLOSED': { label: '已結案', class: 'status-closed' }
+        };
+
+        let html = '';
+
+        pageData.forEach(ticket => {
+            const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
+            const createdAt = new Date(ticket.createdAt).toLocaleString('zh-TW');
+            html += `
+                <div class="ticket-card" onclick="window.viewAdminTicket(${ticket.id})">
+                    <div class="ticket-header">
+                        <span class="ticket-no">${ticket.ticketNo}</span>
+                        <span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span>
+                    </div>
+                    <div class="ticket-subject">${ticket.subject}</div>
+                    <div class="ticket-meta">
+                        <span>會員：<span class="member-link" style="color: var(--accent); cursor: pointer; text-decoration: underline;" onclick="event.stopPropagation(); window.showMemberDetail(${ticket.userId})">${ticket.username || '-'} (${ticket.memberCode || '-'})</span></span>
+                        <span>類別：${ticket.categoryName || '-'}</span>
+                        <span>建立時間：${createdAt}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (totalPages > 1) {
+            html += `<div class="pagination">`;
+            html += `<button onclick="window.goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首頁</button>`;
+            html += `<button onclick="window.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一頁</button>`;
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            html += `<button onclick="window.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一頁</button>`;
+            html += `<button onclick="window.goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末頁</button>`;
+            html += `<span class="pagination-info">共 ${tickets.length} 筆，第 ${currentPage}/${totalPages} 頁</span>`;
+            html += `</div>`;
+        } else if (tickets.length > 0) {
+            html += `<div class="pagination"><span class="pagination-info">共 ${tickets.length} 筆</span></div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    let pendingFiles = [];
+
+    function renderAdminTicketDetail(responseData, ticketId) {
+        const titleEl = document.getElementById('admin-detail-ticket-no');
+        const content = document.getElementById('admin-ticket-detail-content');
+        const quickLinksEl = document.getElementById('admin-quick-links');
+        const createdTimeEl = document.getElementById('admin-ticket-created-time');
+        
+        const ticket = responseData.ticket;
+        const replies = responseData.replies || [];
+        
+        titleEl.textContent = ticket.ticketNo;
+        createdTimeEl.textContent = new Date(ticket.createdAt).toLocaleString('zh-TW');
+        quickLinksEl.innerHTML = `
+            <span class="quick-link" onclick="window.goToMemberDetail(${ticket.userId})">會員詳情</span>
+            <span class="quick-link" onclick="window.goToMemberShields(${ticket.userId}, '${ticket.memberCode || ''}')">會員布卡盾</span>
+        `;
+        
+        const statusMap = {
+            'PENDING': { label: '待處理', class: 'status-pending' },
+            'PROCESSING': { label: '處理中', class: 'status-processing' },
+            'CLOSED': { label: '已結案', class: 'status-closed' }
+        };
+        const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
+        
+        const ticketAttachments = ticket.attachments || [];
+        const ticketAttachmentsHtml = ticketAttachments.length > 0 ? renderAttachmentsList(ticketAttachments) : '';
+        
+        let repliesHtml = '';
+        if (replies.length === 0) {
+            repliesHtml = '<p style="color: var(--muted); text-align: center;">尚無回覆</p>';
+        } else {
+            replies.forEach(reply => {
+                const replyDate = new Date(reply.createdAt).toLocaleString('zh-TW');
+                const isAdmin = reply.userRole === 'ADMIN';
+                const isInternal = reply.isInternal;
+                const authorName = isAdmin ? (reply.username || '客服') : '會員';
+                
+                let bubbleClass = isAdmin ? 'admin' : '';
+                if (isInternal) bubbleClass += ' internal';
+                
+                const memberReadStatus = reply.memberReadAt 
+                    ? `<span style="color: #50ff99; font-size: 11px; margin-left: 8px;">會員已讀 ${new Date(reply.memberReadAt).toLocaleString('zh-TW')}</span>` 
+                    : (isAdmin && !isInternal ? '<span style="color: var(--muted); font-size: 11px; margin-left: 8px;">會員未讀</span>' : '');
+                
+                const readLogsToggle = isAdmin ? `<span class="read-logs-toggle" onclick="window.toggleReadLogs(${reply.id}, this)">查看讀取紀錄</span>` : '';
+                
+                const replyAttachments = reply.attachments || [];
+                const replyAttachmentsHtml = replyAttachments.length > 0 ? renderAttachmentsList(replyAttachments) : '';
+                
+                repliesHtml += `
+                    <div class="reply-bubble ${bubbleClass}">
+                        <div class="reply-meta">
+                            <div>
+                                <span class="reply-author" style="color: ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">${authorName}</span>
+                                ${isInternal ? '<span class="internal-tag">內部備註</span>' : ''}
+                                ${memberReadStatus}
+                            </div>
+                            <div>
+                                ${readLogsToggle}
+                                <span class="reply-time" style="margin-left: 10px;">${replyDate}</span>
+                            </div>
+                        </div>
+                        <p style="white-space: pre-wrap; margin: 0; word-break: break-word;">${reply.content}</p>
+                        ${replyAttachmentsHtml ? `<div style="margin-top: 10px;">${replyAttachmentsHtml}</div>` : ''}
+                        <div id="read-logs-${reply.id}" class="read-logs-list" style="display: none;"></div>
+                    </div>
+                `;
+            });
+        }
+        
+        pendingFiles = [];
+        
+        content.innerHTML = `
+            <div style="margin-bottom: 12px; padding: 12px; background: var(--bg); border-radius: 8px;">
+                <div style="display: flex; gap: 12px; color: var(--muted); font-size: 12px; flex-wrap: wrap; margin-bottom: 8px; align-items: center;">
+                    <span>會員：<span style="color: var(--text);">${ticket.username}</span></span>
+                    <span>編號：<span style="color: var(--text);">${ticket.memberCode || '-'}</span></span>
+                    <span>類別：${ticket.categoryName || '-'}</span>
+                    <span style="display: flex; align-items: center; gap: 6px;">狀態：
+                        <select id="ticket-status-select" onchange="window.changeTicketStatus(${ticketId}, this.value)" style="padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 12px;">
+                            <option value="PENDING" ${ticket.status === 'PENDING' ? 'selected' : ''}>待處理</option>
+                            <option value="PROCESSING" ${ticket.status === 'PROCESSING' ? 'selected' : ''}>處理中</option>
+                            <option value="CLOSED" ${ticket.status === 'CLOSED' ? 'selected' : ''}>已結案</option>
+                        </select>
+                    </span>
+                </div>
+                <h4 style="margin: 8px 0 6px; font-size: 15px;">${ticket.subject}</h4>
+                <p style="white-space: pre-wrap; color: var(--text); font-size: 13px; margin: 0;">${ticket.content}</p>
+                ${ticketAttachmentsHtml ? `<div style="margin-top: 10px;">${ticketAttachmentsHtml}</div>` : ''}
+            </div>
+            <div>
+                <h5 style="color: var(--accent); margin-bottom: 10px; font-size: 13px;">回覆紀錄</h5>
+                <div class="replies-container" id="admin-replies-container">
+                    ${repliesHtml}
+                </div>
+            </div>
+            ${ticket.status !== 'CLOSED' ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-shrink: 0;">
+                <textarea id="admin-reply-content" placeholder="輸入回覆內容..." style="width: 100%; min-height: 70px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; resize: vertical; font-size: 13px;"></textarea>
+                <div style="display: flex; gap: 10px; margin-top: 6px; align-items: flex-start; flex-wrap: wrap;">
+                    <div class="file-upload-area" style="margin: 0;">
+                        <input type="file" id="admin-attachment-input" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="window.handleAdminFileSelect(event)">
+                        <label for="admin-attachment-input" class="file-upload-btn" style="padding: 6px 12px; font-size: 12px;">📎 附件</label>
+                        <span style="color: var(--muted); font-size: 11px;">支援圖片、PDF、文件</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px;">
+                        <input type="checkbox" id="is-internal-reply">
+                        <span>內部備註</span>
+                    </label>
+                    <div id="admin-upload-preview" class="upload-preview" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                    <div style="flex: 1;"></div>
+                    <button onclick="window.submitAdminReplyWithAttachments(${ticketId})" class="btn-primary" style="padding: 8px 16px; font-size: 13px;">送出回覆</button>
+                    <button onclick="window.closeAdminTicket(${ticketId})" class="btn-secondary" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 8px 16px; font-size: 13px; border-radius: 6px; cursor: pointer;">結案</button>
+                </div>
+            </div>
+            ` : '<p style="color: var(--muted); text-align: center; margin-top: 15px; font-size: 13px;">此工單已結案</p>'}
+        `;
+        
+        setTimeout(() => {
+            const repliesContainer = document.getElementById('admin-replies-container');
+            if (repliesContainer) {
+                repliesContainer.scrollTop = repliesContainer.scrollHeight;
+            }
+        }, 100);
+    }
+
+    function renderAttachmentsList(attachments) {
+        if (!attachments || attachments.length === 0) return '';
+        let html = '<div class="attachment-list">';
+        attachments.forEach(att => {
+            const isImage = att.contentType && att.contentType.startsWith('image/');
+            const downloadUrl = `${API_BASE_URL}/tickets/attachments/${att.id}/download`;
+            if (isImage) {
+                html += `
+                    <div class="attachment-item">
+                        <img src="${downloadUrl}?token=${CURRENT_JWT_TOKEN}" class="attachment-thumb" onclick="window.openLightbox('${downloadUrl}?token=${CURRENT_JWT_TOKEN}')" alt="${att.originalFileName}">
+                        <a href="javascript:void(0)" onclick="window.openLightbox('${downloadUrl}?token=${CURRENT_JWT_TOKEN}')">${att.originalFileName}</a>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="attachment-item">
+                        <span>📄</span>
+                        <a href="${downloadUrl}?token=${CURRENT_JWT_TOKEN}" target="_blank">${att.originalFileName}</a>
+                    </div>
+                `;
+            }
+        });
+        html += '</div>';
+        return html;
+    }
+
+    window.openLightbox = function(imageUrl) {
+        const lightbox = document.getElementById('image-lightbox');
+        const img = document.getElementById('lightbox-image');
+        img.src = imageUrl;
+        lightbox.style.display = 'flex';
+    };
+
+    window.closeLightbox = function() {
+        document.getElementById('image-lightbox').style.display = 'none';
+    };
+
+    window.handleAdminFileSelect = function(event) {
+        const files = Array.from(event.target.files);
+        files.forEach(file => {
+            if (!pendingFiles.find(f => f.name === file.name && f.size === file.size)) {
+                pendingFiles.push(file);
+            }
+        });
+        updateAdminUploadPreview();
+        event.target.value = '';
+    };
+
+    function updateAdminUploadPreview() {
+        const container = document.getElementById('admin-upload-preview');
+        if (!container) return;
+        let html = '';
+        pendingFiles.forEach((file, index) => {
+            const isImage = file.type.startsWith('image/');
+            if (isImage) {
+                const url = URL.createObjectURL(file);
+                html += `<div class="upload-preview-item"><img src="${url}" alt="${file.name}"><button class="remove-btn" onclick="window.removeAdminFile(${index})">&times;</button></div>`;
+            } else {
+                html += `<div class="upload-preview-item" style="background: var(--bg); padding: 8px; border-radius: 4px;"><span style="font-size: 12px;">📄 ${file.name}</span><button class="remove-btn" onclick="window.removeAdminFile(${index})">&times;</button></div>`;
+            }
+        });
+        container.innerHTML = html;
+    }
+
+    window.removeAdminFile = function(index) {
+        pendingFiles.splice(index, 1);
+        updateAdminUploadPreview();
+    };
+
+    window.submitAdminReplyWithAttachments = async function(ticketId) {
+        const replyContent = document.getElementById('admin-reply-content').value.trim();
+        const isInternal = document.getElementById('is-internal-reply').checked;
+        
+        if (!replyContent && pendingFiles.length === 0) {
+            alert('請輸入回覆內容或選擇附件');
+            return;
+        }
+
+        try {
+            let replyId = null;
+            if (replyContent) {
+                const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: replyContent, isInternal: isInternal })
+                });
+                const data = await response.json();
+                if (data.success && data.data) {
+                    replyId = data.data.id;
+                } else {
+                    alert(data.message || '回覆失敗');
+                    return;
+                }
+            }
+
+            for (const file of pendingFiles) {
+                const formData = new FormData();
+                formData.append('file', file);
+                if (replyId) {
+                    formData.append('replyId', replyId);
+                }
+                await fetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
+                    body: formData
+                });
+            }
+
+            pendingFiles = [];
+            window.viewAdminTicket(ticketId);
+        } catch (error) {
+            alert('網路連線異常');
+        }
+    };
+
+    window.filterAdminTickets = function(status, btn) {
+        currentFilter = status;
+        currentPage = 1;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFiltersAndRender();
+    };
+
+    window.viewAdminTicket = async function(ticketId) {
+        currentTicketId = ticketId;
+        const modal = document.getElementById('admin-ticket-detail-modal');
+        const content = document.getElementById('admin-ticket-detail-content');
+        
+        content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
+        modal.style.display = 'block';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    renderAdminTicketDetail(data.data, ticketId);
+                }
+            } else {
+                content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+            }
+        } catch (error) {
+            content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    };
+
+    window.closeAdminTicketModal = function() {
+        document.getElementById('admin-ticket-detail-modal').style.display = 'none';
+        currentTicketId = null;
+        replyReadLogs = {};
+    };
+
+    window.submitAdminReply = async function(ticketId) {
+        const replyContent = document.getElementById('admin-reply-content').value.trim();
+        const isInternal = document.getElementById('is-internal-reply').checked;
+        
+        if (!replyContent) {
+            alert('請輸入回覆內容');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: replyContent, isInternal: isInternal })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.viewAdminTicket(ticketId);
+            } else {
+                alert(data.message || '回覆失敗');
+            }
+        } catch (error) {
+            alert('網路連線異常');
+        }
+    };
+
+    window.closeAdminTicket = async function(ticketId) {
+        if (!confirm('確定要結案此工單嗎？')) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/close`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.closeAdminTicketModal();
+                loadAllTickets();
+            } else {
+                alert(data.message || '結案失敗');
+            }
+        } catch (error) {
+            alert('網路連線異常');
+        }
+    };
+
+    window.changeTicketStatus = async function(ticketId, newStatus) {
+        const select = document.getElementById('ticket-status-select');
+        const originalValue = select.getAttribute('data-original') || select.value;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                select.setAttribute('data-original', newStatus);
+                window.viewAdminTicket(ticketId);
+                loadAllTickets();
+            } else {
+                alert(data.message || '狀態更新失敗');
+                select.value = originalValue;
+            }
+        } catch (error) {
+            alert('網路連線異常');
+            select.value = originalValue;
+        }
+    };
+
+    window.toggleReadLogs = async function(replyId, toggleEl) {
+        const container = document.getElementById(`read-logs-${replyId}`);
+        
+        if (container.style.display === 'block') {
+            container.style.display = 'none';
+            toggleEl.textContent = '查看讀取紀錄';
+            return;
+        }
+        
+        if (replyReadLogs[replyId]) {
+            renderReadLogs(replyId, replyReadLogs[replyId]);
+            container.style.display = 'block';
+            toggleEl.textContent = '隱藏讀取紀錄';
+            return;
+        }
+        
+        container.innerHTML = '<p style="color: var(--muted);">載入中...</p>';
+        container.style.display = 'block';
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets/replies/${replyId}/read-logs`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    replyReadLogs[replyId] = data.data;
+                    renderReadLogs(replyId, data.data);
+                    toggleEl.textContent = '隱藏讀取紀錄';
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+        }
+    };
+
+    function renderReadLogs(replyId, logs) {
+        const container = document.getElementById(`read-logs-${replyId}`);
+        if (!logs || logs.length === 0) {
+            container.innerHTML = '<div class="read-logs-list">尚無人讀取</div>';
+            return;
+        }
+        
+        let html = '<div class="read-logs-list">';
+        logs.forEach(log => {
+            const readAt = new Date(log.readAt).toLocaleString('zh-TW');
+            const roleLabel = log.userRole === 'ADMIN' ? '客服' : '會員';
+            html += `<div style="margin-bottom: 5px;"><span style="color: var(--accent);">${log.username}</span> (${roleLabel}) - ${readAt}</div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.goToMemberDetail = function(userId) {
+        window.showMemberDetail(userId);
+    };
+
+    window.goToMemberShields = function(userId, memberCode) {
+        window.closeAdminTicketModal();
+        sessionStorage.setItem('pendingShieldsUserId', userId);
+        sessionStorage.setItem('pendingShieldsMemberNo', memberCode || '');
+        window.location.href = 'dashboard.html?admin=true&page=admin/shields';
+    };
+})();
+</script>

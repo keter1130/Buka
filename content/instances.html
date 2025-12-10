@@ -1,0 +1,489 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+    .shield-card { background: var(--card); border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .shield-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+    .shield-name { color: var(--gold); font-size: 1.2em; font-weight: 600; }
+    .shield-status { padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 500; }
+    .status-active { background: rgba(80, 255, 150, 0.15); color: #50ff99; }
+    .status-expired { background: rgba(255, 80, 80, 0.15); color: #ff5050; }
+    .shield-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .info-item label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 3px; }
+    .info-item span { font-size: 15px; }
+    .shield-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-primary { padding: 10px 20px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-secondary { padding: 10px 20px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; cursor: pointer; }
+    .btn-gold { padding: 10px 20px; background: var(--gold); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 60px; margin-bottom: 15px; }
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
+    .product-card { background: var(--card); border-radius: 12px; padding: 25px; border: 1px solid var(--border); text-align: center; transition: transform 0.2s, border-color 0.2s; }
+    .product-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .product-name { color: var(--gold); font-size: 1.3em; font-weight: 600; margin-bottom: 10px; }
+    .product-price { font-size: 2em; color: var(--accent); font-weight: 700; }
+    .product-desc { color: var(--muted); font-size: 14px; margin: 15px 0; }
+    .product-specs { text-align: left; margin: 15px 0; }
+    .spec-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .month-selector { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+    .month-btn { padding: 12px 20px; border: 2px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; cursor: pointer; min-width: 70px; transition: all 0.2s; }
+    .month-btn:hover { border-color: var(--accent); }
+    .month-btn.selected { border-color: var(--accent); background: rgba(0, 246, 255, 0.1); color: var(--accent); }
+    .total-price { font-size: 1.5em; color: var(--gold); margin: 15px 0; text-align: center; }
+    .modal-content { max-width: 500px; margin: 80px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 28px; cursor: pointer; line-height: 1; }
+    .upgrade-card { background: var(--bg); border: 2px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s; }
+    .upgrade-card:hover { border-color: var(--accent); }
+    .upgrade-card.selected { border-color: var(--gold); background: rgba(255, 215, 0, 0.05); }
+    .upgrade-info { display: flex; justify-content: space-between; align-items: center; }
+    .upgrade-price { color: var(--gold); font-size: 1.2em; font-weight: 600; }
+    .upgrade-diff { color: var(--accent); font-size: 0.9em; margin-top: 5px; }
+    .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: 0.3s; border-radius: 22px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--text); transition: 0.3s; border-radius: 50%; }
+    .toggle-switch input:checked + .toggle-slider { background-color: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
+</style>
+
+<div class="content-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h3 style="margin: 0;">我的布卡盾</h3>
+        <button onclick="window.showPurchaseModal()" class="btn-primary">+ 購買新的布卡盾</button>
+    </div>
+    
+    <div id="shields-container">
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <p style="color: var(--muted);">載入中...</p>
+        </div>
+    </div>
+</div>
+
+<div id="control-panel-container" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4 style="margin: 0; color: var(--gold);"><span id="cp-shield-name"></span> - 管理面板</h4>
+        <button onclick="window.closeControlPanel()" class="btn-secondary" style="padding: 6px 15px;">關閉管理面板</button>
+    </div>
+    <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; height: calc(100vh - 200px);">
+        <iframe id="control-panel-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+</div>
+
+<div id="purchase-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+    <div style="max-width: 900px; margin: 50px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3 style="color: var(--gold); margin: 0;">選擇方案</h3>
+            <button onclick="window.closePurchaseModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="products-container" class="products-grid">
+            <p style="color: var(--muted); text-align: center;">載入產品中...</p>
+        </div>
+    </div>
+</div>
+
+<div id="month-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; overflow-y: auto;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="color: var(--gold); margin: 0;" id="month-modal-title">選擇月數</h3>
+            <button class="modal-close" onclick="window.closeMonthModal()">&times;</button>
+        </div>
+        <p style="color: var(--muted); text-align: center; margin-bottom: 20px;" id="month-modal-product"></p>
+        <div class="month-selector" id="month-buttons"></div>
+        <div class="total-price" id="month-total-price"></div>
+        <button id="month-confirm-btn" class="btn-primary" style="width: 100%; margin-top: 15px;">確認</button>
+    </div>
+</div>
+
+<div id="upgrade-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; overflow-y: auto;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 style="color: var(--gold); margin: 0;">升級布卡盾</h3>
+            <button class="modal-close" onclick="window.closeUpgradeModal()">&times;</button>
+        </div>
+        <p style="color: var(--muted); margin-bottom: 20px;" id="upgrade-current-info"></p>
+        <div id="upgrade-options-container">
+            <p style="color: var(--muted); text-align: center;">載入中...</p>
+        </div>
+        <button id="upgrade-confirm-btn" class="btn-gold" style="width: 100%; margin-top: 20px; display: none;">確認升級</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    let productsData = [];
+    let shieldsData = [];
+    let monthModalContext = null;
+    let upgradeContext = null;
+
+    loadMyShields();
+    loadProducts();
+
+    async function loadMyShields() {
+        const container = document.getElementById('shields-container');
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/my`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    shieldsData = data.data || [];
+                    renderShields(shieldsData);
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    }
+
+    function renderShields(shields) {
+        const container = document.getElementById('shields-container');
+        if (!shields || shields.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🛡️</div>
+                    <h4 style="color: var(--gold);">您還沒有布卡盾</h4>
+                    <p style="color: var(--muted); margin-bottom: 20px;">點擊下方按鈕購買您的第一個布卡盾</p>
+                    <button onclick="window.showPurchaseModal()" class="btn-primary">立即購買</button>
+                </div>
+            `;
+            return;
+        }
+        let html = '';
+        shields.forEach(shield => {
+            const isActive = shield.status === 'ACTIVE';
+            const expiryDate = shield.expiresAt ? new Date(shield.expiresAt).toLocaleDateString('zh-TW') : '-';
+            const daysRemaining = shield.expiresAt ? Math.ceil((new Date(shield.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+            const deviceLimit = shield.deviceLimit ? shield.deviceLimit + ' 個' : '-';
+            const bandwidthLimit = shield.bandwidthLimit ? shield.bandwidthLimit + ' M' : '-';
+            html += `
+                <div class="shield-card">
+                    <div class="shield-header">
+                        <div>
+                            <div class="shield-name">${shield.productName || '布卡盾'}</div>
+                            <div style="color: var(--muted); font-size: 14px;">${shield.shieldNo || ''}</div>
+                        </div>
+                        <span class="shield-status ${isActive ? 'status-active' : 'status-expired'}">${isActive ? '運作中' : '已到期'}</span>
+                    </div>
+                    <div class="shield-info">
+                        <div class="info-item"><label>設備上限</label><span>${deviceLimit}</span></div>
+                        <div class="info-item"><label>頻寬上限</label><span>${bandwidthLimit}</span></div>
+                        <div class="info-item"><label>到期時間</label><span>${expiryDate}</span></div>
+                        <div class="info-item"><label>剩餘天數</label><span style="color: ${daysRemaining <= 7 ? '#ff5050' : 'var(--accent)'}">${daysRemaining > 0 ? daysRemaining + ' 天' : '已到期'}</span></div>
+                        <div class="info-item" style="grid-column: span 2;">
+                            <label>自動續費</label>
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" ${shield.autoRenew ? 'checked' : ''} onchange="window.toggleAutoRenew(${shield.id}, this.checked, this)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span style="font-size: 12px; color: var(--muted);">${shield.autoRenew ? '已開啟' : '已關閉'}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="shield-actions">
+                        <button onclick="window.openControlPanelNewWindow(${shield.id}, '${(shield.productName || shield.shieldNo || '').replace(/'/g, "\\'")}')" class="btn-primary">管理面板</button>
+                        <button onclick="window.openControlPanelIframe(${shield.id}, '${(shield.productName || shield.shieldNo || '').replace(/'/g, "\\'")}')" class="btn-secondary" style="font-size: 12px;">內嵌面板</button>
+                        <button onclick="window.showRenewModal(${shield.id})" class="btn-gold">續費</button>
+                        <button onclick="window.showUpgradeModal(${shield.id})" class="btn-secondary">升級</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function loadProducts() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/products`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) productsData = data.data || [];
+            }
+        } catch (error) { console.error('載入產品失敗:', error); }
+    }
+
+    window.showPurchaseModal = function() {
+        const modal = document.getElementById('purchase-modal');
+        const container = document.getElementById('products-container');
+        if (productsData.length === 0) {
+            container.innerHTML = '<p style="color: var(--muted);">沒有可用的產品</p>';
+        } else {
+            let html = '';
+            productsData.forEach(product => {
+                const deviceLimit = product.deviceLimit ? product.deviceLimit + ' 個' : '-';
+                const bandwidthLimit = product.bandwidthLimit ? product.bandwidthLimit + ' M' : '-';
+                html += `
+                    <div class="product-card">
+                        <div class="product-name">${product.productName}</div>
+                        <div class="product-price">${Number(product.monthlyPrice).toLocaleString()} 點<span style="font-size: 14px; color: var(--muted);">/月</span></div>
+                        <div class="product-desc">${product.description || ''}</div>
+                        <div class="product-specs">
+                            <div class="spec-item"><span>設備上限</span><span>${deviceLimit}</span></div>
+                            <div class="spec-item"><span>頻寬上限</span><span>${bandwidthLimit}</span></div>
+                        </div>
+                        <button onclick="window.showMonthModal('purchase', ${product.id}, '${product.productName}', ${product.monthlyPrice})" class="btn-primary" style="width: 100%; margin-top: 15px;">立即購買</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        modal.style.display = 'block';
+    };
+    window.closePurchaseModal = function() { document.getElementById('purchase-modal').style.display = 'none'; };
+
+    window.showMonthModal = function(mode, id, productName, price) {
+        monthModalContext = { mode, id, productName, price, selectedMonths: 1 };
+        document.getElementById('month-modal-title').textContent = mode === 'purchase' ? '選擇購買月數' : '選擇續費月數';
+        document.getElementById('month-modal-product').textContent = productName;
+        renderMonthButtons();
+        updateTotalPrice();
+        document.getElementById('month-modal').style.display = 'block';
+    };
+    window.closeMonthModal = function() { document.getElementById('month-modal').style.display = 'none'; monthModalContext = null; };
+
+    function renderMonthButtons() {
+        const container = document.getElementById('month-buttons');
+        const months = [1, 3, 6, 12];
+        container.innerHTML = months.map(m => `<button class="month-btn ${m === 1 ? 'selected' : ''}" onclick="window.selectMonth(${m})">${m} 個月</button>`).join('');
+    }
+    window.selectMonth = function(months) {
+        if (!monthModalContext) return;
+        monthModalContext.selectedMonths = months;
+        document.querySelectorAll('.month-btn').forEach(btn => {
+            btn.classList.toggle('selected', btn.textContent.startsWith(months + ' '));
+        });
+        updateTotalPrice();
+    };
+    function updateTotalPrice() {
+        if (!monthModalContext) return;
+        const total = monthModalContext.price * monthModalContext.selectedMonths;
+        document.getElementById('month-total-price').textContent = `總計：${total.toLocaleString()} 點`;
+    }
+
+    document.getElementById('month-confirm-btn').addEventListener('click', async function() {
+        if (!monthModalContext) return;
+        const { mode, id, selectedMonths } = monthModalContext;
+        this.disabled = true;
+        this.textContent = '處理中...';
+        try {
+            let url, body;
+            if (mode === 'purchase') {
+                url = `${API_BASE_URL}/shields/purchase`;
+                body = { productId: id, months: selectedMonths };
+            } else {
+                url = `${API_BASE_URL}/shields/renew`;
+                body = { shieldId: id, months: selectedMonths };
+            }
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.closeMonthModal();
+                window.closePurchaseModal();
+                loadMyShields();
+                showToast(mode === 'purchase' ? '購買成功！' : '續費成功！', 'success');
+            } else {
+                showToast(data.message || '操作失敗', 'error');
+            }
+        } catch (error) {
+            showToast('網路連線異常', 'error');
+        }
+        this.disabled = false;
+        this.textContent = '確認';
+    });
+
+    window.showRenewModal = function(shieldId) {
+        const shield = shieldsData.find(s => s.id == shieldId);
+        if (!shield) return showToast('找不到布卡盾', 'error');
+        window.showMonthModal('renew', shieldId, shield.productName, shield.monthlyPrice || 0);
+    };
+
+    window.showUpgradeModal = async function(shieldId) {
+        const shield = shieldsData.find(s => s.id == shieldId);
+        if (!shield) return showToast('找不到布卡盾', 'error');
+        upgradeContext = { shieldId, currentShield: shield, selectedProductId: null };
+        document.getElementById('upgrade-current-info').textContent = `目前方案：${shield.productName}`;
+        document.getElementById('upgrade-options-container').innerHTML = '<p style="color: var(--muted); text-align: center;">載入中...</p>';
+        document.getElementById('upgrade-confirm-btn').style.display = 'none';
+        document.getElementById('upgrade-modal').style.display = 'block';
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/upgrade-options`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            const data = await response.json();
+            if (data.success && data.data.length > 0) {
+                renderUpgradeOptions(data.data, shield);
+            } else {
+                document.getElementById('upgrade-options-container').innerHTML = '<p style="color: var(--muted); text-align: center;">目前已是最高等級，無法升級</p>';
+            }
+        } catch (error) {
+            document.getElementById('upgrade-options-container').innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    };
+    window.closeUpgradeModal = function() { document.getElementById('upgrade-modal').style.display = 'none'; upgradeContext = null; };
+
+    function renderUpgradeOptions(products, currentShield) {
+        const container = document.getElementById('upgrade-options-container');
+        const daysRemaining = currentShield.expiresAt ? Math.max(0, Math.ceil((new Date(currentShield.expiresAt) - new Date()) / (1000 * 60 * 60 * 24))) : 0;
+        const currentPrice = currentShield.monthlyPrice || 0;
+        let html = '<p style="color: var(--muted); font-size: 14px; margin-bottom: 15px;">選擇要升級的方案（升級費用按剩餘天數比例計算）：</p>';
+        products.forEach(product => {
+            const priceDiff = Number(product.monthlyPrice) - Number(currentPrice);
+            const upgradeCost = Math.ceil(priceDiff * daysRemaining / 30);
+            const deviceLimit = product.deviceLimit ? product.deviceLimit + ' 個' : '-';
+            const bandwidthLimit = product.bandwidthLimit ? product.bandwidthLimit + ' M' : '-';
+            html += `
+                <div class="upgrade-card" onclick="window.selectUpgradeProduct(${product.id}, ${upgradeCost})" data-product-id="${product.id}">
+                    <div class="upgrade-info">
+                        <div>
+                            <div style="font-weight: 600; color: var(--gold);">${product.productName}</div>
+                            <div style="color: var(--muted); font-size: 13px;">設備: ${deviceLimit} / 頻寬: ${bandwidthLimit}</div>
+                        </div>
+                        <div class="upgrade-price">${upgradeCost.toLocaleString()} 點</div>
+                    </div>
+                    <div class="upgrade-diff">月費 ${Number(product.monthlyPrice).toLocaleString()} 點 (+ ${priceDiff.toLocaleString()} 點/月)</div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    window.selectUpgradeProduct = function(productId, cost) {
+        if (!upgradeContext) return;
+        upgradeContext.selectedProductId = productId;
+        upgradeContext.upgradeCost = cost;
+        document.querySelectorAll('.upgrade-card').forEach(card => {
+            card.classList.toggle('selected', card.dataset.productId == productId);
+        });
+        document.getElementById('upgrade-confirm-btn').style.display = 'block';
+        document.getElementById('upgrade-confirm-btn').textContent = `確認升級 (${cost.toLocaleString()} 點)`;
+    };
+
+    document.getElementById('upgrade-confirm-btn').addEventListener('click', async function() {
+        if (!upgradeContext || !upgradeContext.selectedProductId) return;
+        this.disabled = true;
+        this.textContent = '處理中...';
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/upgrade`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shieldId: upgradeContext.shieldId, newProductId: upgradeContext.selectedProductId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.closeUpgradeModal();
+                loadMyShields();
+                showToast('升級成功！', 'success');
+            } else {
+                showToast(data.message || '升級失敗', 'error');
+            }
+        } catch (error) {
+            showToast('網路連線異常', 'error');
+        }
+        this.disabled = false;
+        this.textContent = '確認升級';
+    });
+
+    window.openControlPanelNewWindow = async function(shieldId, shieldName) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/control-panel`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            const data = await response.json();
+            if (data.success && (data.data.controlPanelUrl || data.data.url)) {
+                const url = data.data.controlPanelUrl || data.data.url;
+                window.open(url, '_blank');
+            } else {
+                showToast(data.message || '無法開啟管理面板', 'error');
+            }
+        } catch (error) {
+            showToast('網路連線異常', 'error');
+        }
+    };
+
+    window.openControlPanelIframe = async function(shieldId, shieldName) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/control-panel`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            const data = await response.json();
+            if (data.success && (data.data.controlPanelUrl || data.data.url)) {
+                const mainCard = document.querySelector('.content-card');
+                const cpContainer = document.getElementById('control-panel-container');
+                const cpIframe = document.getElementById('control-panel-iframe');
+                const cpName = document.getElementById('cp-shield-name');
+                if (mainCard) mainCard.style.display = 'none';
+                cpName.textContent = shieldName || '布卡盾';
+                cpIframe.src = data.data.controlPanelUrl || data.data.url;
+                cpContainer.style.display = 'block';
+            } else {
+                showToast(data.message || '無法開啟管理面板', 'error');
+            }
+        } catch (error) {
+            showToast('網路連線異常', 'error');
+        }
+    };
+
+    window.closeControlPanel = function() {
+        const mainCard = document.querySelector('.content-card');
+        const cpContainer = document.getElementById('control-panel-container');
+        const cpIframe = document.getElementById('control-panel-iframe');
+        cpIframe.src = '';
+        cpContainer.style.display = 'none';
+        if (mainCard) mainCard.style.display = 'block';
+    };
+
+    window.toggleAutoRenew = async function(shieldId, enable, checkbox) {
+        const confirmMsg = enable 
+            ? '確定要開啟自動續費嗎？\n\n開啟後，系統將在布卡盾到期前1天自動續費1個月，並從您的點數餘額中扣除。'
+            : '確定要關閉自動續費嗎？';
+        
+        if (!confirm(confirmMsg)) {
+            checkbox.checked = !enable;
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/shields/${shieldId}/auto-renew`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ enable: enable })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast(data.message || (enable ? '已開啟自動續費' : '已關閉自動續費'), 'success');
+                loadMyShields();
+            } else {
+                checkbox.checked = !enable;
+                showToast(data.message || '操作失敗', 'error');
+            }
+        } catch (error) {
+            checkbox.checked = !enable;
+            showToast('網路連線異常', 'error');
+        }
+    };
+
+    function showToast(message, type) {
+        let toast = document.getElementById('toast-notification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.style.cssText = 'position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 8px; z-index: 9999; font-weight: 500; transition: opacity 0.3s;';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.style.background = type === 'success' ? 'rgba(80, 255, 150, 0.9)' : 'rgba(255, 80, 80, 0.9)';
+        toast.style.color = type === 'success' ? '#000' : '#fff';
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+})();
+</script>

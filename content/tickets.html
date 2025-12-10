@@ -1,0 +1,659 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+    .ticket-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
+    .ticket-card:hover { border-color: var(--accent); }
+    .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .ticket-no { color: var(--muted); font-size: 13px; font-family: monospace; }
+    .ticket-status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .status-pending { background: rgba(255, 215, 0, 0.15); color: var(--gold); }
+    .status-processing { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
+    .status-closed { background: rgba(80, 255, 150, 0.15); color: #50ff99; }
+    .ticket-subject { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .ticket-meta { display: flex; gap: 20px; color: var(--muted); font-size: 13px; }
+    .btn-primary { padding: 10px 20px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto; }
+    .modal-content { max-width: 600px; margin: 50px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+    .replies-container { flex: 1; max-height: 250px; overflow-y: auto; padding-right: 8px; }
+    .replies-container::-webkit-scrollbar { width: 8px; }
+    .replies-container::-webkit-scrollbar-track { background: var(--bg); border-radius: 4px; }
+    .replies-container::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 4px; }
+    .replies-container::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px; }
+    .form-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-input[type="date"] { cursor: pointer; color-scheme: dark; appearance: auto; -webkit-appearance: auto; color: #eaf2f6 !important; background: #091218; }
+    .form-input[type="date"]::-webkit-datetime-edit,
+    .form-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+    .form-input[type="date"]::-webkit-datetime-edit-text,
+    .form-input[type="date"]::-webkit-datetime-edit-month-field,
+    .form-input[type="date"]::-webkit-datetime-edit-day-field,
+    .form-input[type="date"]::-webkit-datetime-edit-year-field { color: #eaf2f6 !important; }
+    .form-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(100%) !important; cursor: pointer; opacity: 1 !important; width: 20px; height: 20px; }
+    select.form-input { appearance: none; }
+    textarea.form-input { min-height: 120px; resize: vertical; }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .filter-btn:hover { border-color: var(--accent); }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .pagination button { padding: 8px 14px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 6px; cursor: pointer; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pagination button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .pagination-info { color: var(--muted); font-size: 13px; }
+    .attachment-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .attachment-item { display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+    .attachment-item a { color: var(--accent); text-decoration: none; }
+    .attachment-item a:hover { text-decoration: underline; }
+    .attachment-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid var(--border); }
+    .file-upload-area { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+    .file-upload-area input[type="file"] { display: none; }
+    .file-upload-btn { padding: 8px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 13px; }
+    .file-upload-btn:hover { border-color: var(--accent); }
+    .upload-preview { display: flex; gap: 8px; flex-wrap: wrap; }
+    .upload-preview-item { position: relative; }
+    .upload-preview-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+    .upload-preview-item .remove-btn { position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #ff5050; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 1; }
+    .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+    .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+    .lightbox-close { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; cursor: pointer; }
+</style>
+
+<div class="content-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <h3 style="margin: 0;">客服工單</h3>
+        <button onclick="window.showCreateTicketModal()" class="btn-primary">+ 提交新工單</button>
+    </div>
+
+    <div class="filter-bar">
+        <button class="filter-btn active" onclick="window.filterTickets('all', this)">全部</button>
+        <button class="filter-btn" onclick="window.filterTickets('PENDING', this)">待處理</button>
+        <button class="filter-btn" onclick="window.filterTickets('PROCESSING', this)">處理中</button>
+        <button class="filter-btn" onclick="window.filterTickets('CLOSED', this)">已結案</button>
+        <div style="flex: 1;"></div>
+        <input type="date" id="filter-start-date" class="form-input" style="padding: 8px 12px; max-width: 140px;" data-enhance="calendar">
+        <span style="color: var(--muted);">至</span>
+        <input type="date" id="filter-end-date" class="form-input" style="padding: 8px 12px; max-width: 140px;" data-enhance="calendar">
+        <select id="filter-page-size" class="form-input" style="padding: 8px 12px; max-width: 90px;">
+            <option value="10">10筆</option>
+            <option value="20" selected>20筆</option>
+            <option value="50">50筆</option>
+        </select>
+        <button onclick="window.applyFilters()" class="btn-primary" style="padding: 8px 16px;">篩選</button>
+    </div>
+    
+    <div id="tickets-container">
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <p style="color: var(--muted);">載入中...</p>
+        </div>
+    </div>
+</div>
+
+<div id="create-ticket-modal" class="modal">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3 style="color: var(--gold); margin: 0;">提交新工單</h3>
+            <button onclick="window.closeCreateTicketModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <form id="create-ticket-form">
+            <div class="form-group">
+                <label>問題類別</label>
+                <select id="ticket-category" class="form-input" required>
+                    <option value="">請選擇類別</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>主旨</label>
+                <input type="text" id="ticket-subject" class="form-input" placeholder="請簡述您的問題" required>
+            </div>
+            <div class="form-group">
+                <label>問題描述</label>
+                <textarea id="ticket-content" class="form-input" placeholder="請詳細描述您遇到的問題..." required></textarea>
+            </div>
+            <div id="ticket-form-message" style="margin-bottom: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+            <button type="submit" class="btn-primary" style="width: 100%;">送出工單</button>
+        </form>
+    </div>
+</div>
+
+<div id="ticket-detail-modal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 10px;">
+            <h3 style="color: var(--gold); margin: 0; font-size: 16px;" id="detail-ticket-no"></h3>
+            <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                <span id="ticket-created-time" style="color: var(--muted); font-size: 12px;"></span>
+                <button onclick="window.closeTicketDetailModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+        </div>
+        <div id="ticket-detail-content"></div>
+    </div>
+</div>
+
+<div id="image-lightbox" class="lightbox" onclick="window.closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-image" src="" alt="預覽圖片">
+</div>
+
+<script>
+(function() {
+    let categoriesData = [];
+    let allTickets = [];
+    let currentFilter = 'all';
+    let currentPage = 1;
+    let pageSize = 20;
+
+    initDefaultDates();
+    loadCategories();
+    loadMyTickets();
+
+    function initDefaultDates() {
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        const formatDate = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        document.getElementById('filter-start-date').value = formatDate(thirtyDaysAgo);
+        document.getElementById('filter-end-date').value = formatDate(today);
+    }
+    
+    document.getElementById('create-ticket-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await createTicket();
+    });
+
+    async function loadCategories() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/tickets/categories`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    categoriesData = data.data;
+                    populateCategorySelect();
+                }
+            }
+        } catch (error) {
+            console.error('載入分類失敗:', error);
+        }
+    }
+
+    function populateCategorySelect() {
+        const select = document.getElementById('ticket-category');
+        let html = '<option value="">請選擇類別</option>';
+        categoriesData.forEach(cat => {
+            html += `<option value="${cat.id}">${cat.categoryName}</option>`;
+        });
+        select.innerHTML = html;
+    }
+
+    async function loadMyTickets() {
+        const container = document.getElementById('tickets-container');
+        try {
+            const response = await fetch(`${API_BASE_URL}/tickets/my`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    allTickets = data.data || [];
+                    currentPage = 1;
+                    applyFiltersAndRender();
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    }
+
+    window.filterTickets = function(status, btn) {
+        currentFilter = status;
+        currentPage = 1;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFiltersAndRender();
+    };
+
+    window.applyFilters = function() {
+        currentPage = 1;
+        applyFiltersAndRender();
+    };
+
+    window.goToPage = function(page) {
+        currentPage = page;
+        applyFiltersAndRender();
+    };
+
+    function applyFiltersAndRender() {
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        pageSize = parseInt(document.getElementById('filter-page-size').value) || 20;
+
+        let filtered = allTickets;
+
+        if (currentFilter !== 'all') {
+            filtered = filtered.filter(t => t.status === currentFilter);
+        }
+        if (startDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(t => new Date(t.createdAt) >= start);
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(t => new Date(t.createdAt) <= end);
+        }
+
+        renderTickets(filtered);
+    }
+
+    function renderTickets(tickets) {
+        const container = document.getElementById('tickets-container');
+        
+        if (!tickets || tickets.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size: 60px; margin-bottom: 15px;">📋</div>
+                    <h4 style="color: var(--gold);">尚無工單</h4>
+                    <p style="color: var(--muted); margin-bottom: 20px;">有問題嗎？點擊下方按鈕提交工單</p>
+                    <button onclick="window.showCreateTicketModal()" class="btn-primary">提交新工單</button>
+                </div>
+            `;
+            return;
+        }
+
+        const totalPages = Math.ceil(tickets.length / pageSize);
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = startIdx + pageSize;
+        const pageData = tickets.slice(startIdx, endIdx);
+
+        const statusMap = {
+            'PENDING': { label: '待處理', class: 'status-pending' },
+            'PROCESSING': { label: '處理中', class: 'status-processing' },
+            'CLOSED': { label: '已結案', class: 'status-closed' }
+        };
+
+        let html = '';
+        pageData.forEach(ticket => {
+            const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
+            const createdAt = new Date(ticket.createdAt).toLocaleDateString('zh-TW');
+
+            html += `
+                <div class="ticket-card" onclick="window.showTicketDetail(${ticket.id})">
+                    <div class="ticket-header">
+                        <span class="ticket-no">${ticket.ticketNo}</span>
+                        <span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span>
+                    </div>
+                    <div class="ticket-subject">${ticket.subject}</div>
+                    <div class="ticket-meta">
+                        <span>類別：${ticket.categoryName}</span>
+                        <span>建立時間：${createdAt}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (totalPages > 1) {
+            html += `<div class="pagination">`;
+            html += `<button onclick="window.goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首頁</button>`;
+            html += `<button onclick="window.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一頁</button>`;
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            html += `<button onclick="window.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一頁</button>`;
+            html += `<button onclick="window.goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末頁</button>`;
+            html += `<span class="pagination-info">共 ${tickets.length} 筆，第 ${currentPage}/${totalPages} 頁</span>`;
+            html += `</div>`;
+        } else if (tickets.length > 0) {
+            html += `<div class="pagination"><span class="pagination-info">共 ${tickets.length} 筆</span></div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    async function createTicket() {
+        const categoryId = document.getElementById('ticket-category').value;
+        const subject = document.getElementById('ticket-subject').value.trim();
+        const content = document.getElementById('ticket-content').value.trim();
+
+        if (!categoryId || !subject || !content) {
+            showFormMessage('請填寫所有必填欄位', false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/tickets`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ categoryId: parseInt(categoryId), subject, content })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showFormMessage('工單已送出！', true);
+                setTimeout(() => {
+                    window.closeCreateTicketModal();
+                    loadMyTickets();
+                }, 1500);
+            } else {
+                showFormMessage(data.message || '送出失敗', false);
+            }
+        } catch (error) {
+            showFormMessage('網路連線異常', false);
+        }
+    }
+
+    function showFormMessage(msg, isSuccess) {
+        const el = document.getElementById('ticket-form-message');
+        el.textContent = msg;
+        el.style.display = 'block';
+        el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
+        el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
+    }
+
+    let pendingFiles = [];
+
+    function renderTicketDetail(responseData, ticketId) {
+        const titleEl = document.getElementById('detail-ticket-no');
+        const content = document.getElementById('ticket-detail-content');
+        const createdTimeEl = document.getElementById('ticket-created-time');
+        
+        const ticket = responseData.ticket;
+        const replies = responseData.replies || [];
+        
+        titleEl.textContent = ticket.ticketNo;
+        createdTimeEl.textContent = new Date(ticket.createdAt).toLocaleString('zh-TW');
+        
+        const statusMap = {
+            'PENDING': { label: '待處理', class: 'status-pending' },
+            'PROCESSING': { label: '處理中', class: 'status-processing' },
+            'CLOSED': { label: '已結案', class: 'status-closed' }
+        };
+        const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
+        
+        const ticketAttachments = ticket.attachments || [];
+        const ticketAttachmentsHtml = ticketAttachments.length > 0 ? renderAttachmentsList(ticketAttachments) : '';
+        
+        let repliesHtml = '';
+        if (replies.length === 0) {
+            repliesHtml = '<p style="color: var(--muted); text-align: center;">尚無回覆</p>';
+        } else {
+            replies.forEach(reply => {
+                const replyDate = new Date(reply.createdAt).toLocaleString('zh-TW');
+                const isAdmin = reply.userRole === 'ADMIN';
+                const replyAttachments = reply.attachments || [];
+                const replyAttachmentsHtml = replyAttachments.length > 0 ? renderAttachmentsList(replyAttachments) : '';
+                
+                repliesHtml += `
+                    <div style="background: ${isAdmin ? 'rgba(0, 246, 255, 0.08)' : 'var(--bg)'}; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">${isAdmin ? '客服回覆' : '您'}</span>
+                            <span style="color: var(--muted); font-size: 12px;">${replyDate}</span>
+                        </div>
+                        <p style="white-space: pre-wrap; margin: 0;">${reply.content}</p>
+                        ${replyAttachmentsHtml ? `<div style="margin-top: 10px;">${replyAttachmentsHtml}</div>` : ''}
+                    </div>
+                `;
+            });
+        }
+        
+        pendingFiles = [];
+        
+        content.innerHTML = `
+            <div style="margin-bottom: 12px;">
+                <h4 style="margin-bottom: 6px; font-size: 15px;">${ticket.subject}</h4>
+                <div style="display: flex; gap: 12px; color: var(--muted); font-size: 12px; flex-wrap: wrap;">
+                    <span>類別：${ticket.categoryName || '-'}</span>
+                    <span>狀態：<span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span></span>
+                </div>
+            </div>
+            <div style="background: var(--bg); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                <p style="white-space: pre-wrap; font-size: 13px; margin: 0;">${ticket.content}</p>
+                ${ticketAttachmentsHtml ? `<div style="margin-top: 10px;">${ticketAttachmentsHtml}</div>` : ''}
+            </div>
+            <div>
+                <h5 style="color: var(--accent); margin-bottom: 10px; font-size: 13px;">回覆紀錄</h5>
+                <div class="replies-container" id="member-replies-container">
+                    ${repliesHtml}
+                </div>
+            </div>
+            ${ticket.status !== 'CLOSED' ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-shrink: 0;">
+                <textarea id="reply-content" placeholder="輸入回覆內容..." style="width: 100%; min-height: 60px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; resize: vertical; font-size: 13px;"></textarea>
+                <div style="display: flex; gap: 10px; margin-top: 6px; align-items: flex-start; flex-wrap: wrap;">
+                    <div class="file-upload-area" style="margin: 0;">
+                        <input type="file" id="attachment-input" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="window.handleFileSelect(event)">
+                        <label for="attachment-input" class="file-upload-btn" style="padding: 6px 12px; font-size: 12px;">📎 附件</label>
+                        <span style="color: var(--muted); font-size: 11px;">支援圖片、PDF、文件</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                    <div id="upload-preview" class="upload-preview" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                    <div style="flex: 1;"></div>
+                    <button onclick="window.submitReplyWithAttachments(${ticketId})" class="btn-primary" style="padding: 8px 16px; font-size: 13px;">送出回覆</button>
+                </div>
+            </div>
+            ` : '<p style="color: var(--muted); text-align: center; margin-top: 15px; font-size: 13px;">此工單已結案</p>'}
+        `;
+        
+        setTimeout(() => {
+            const repliesContainer = document.getElementById('member-replies-container');
+            if (repliesContainer) {
+                repliesContainer.scrollTop = repliesContainer.scrollHeight;
+            }
+        }, 100);
+    }
+
+    function renderAttachmentsList(attachments) {
+        if (!attachments || attachments.length === 0) return '';
+        let html = '<div class="attachment-list">';
+        attachments.forEach(att => {
+            const isImage = att.contentType && att.contentType.startsWith('image/');
+            const downloadUrl = `${API_BASE_URL}/tickets/attachments/${att.id}/download`;
+            if (isImage) {
+                html += `
+                    <div class="attachment-item">
+                        <img src="${downloadUrl}?token=${CURRENT_JWT_TOKEN}" class="attachment-thumb" onclick="window.openLightbox('${downloadUrl}?token=${CURRENT_JWT_TOKEN}')" alt="${att.originalFileName}">
+                        <a href="javascript:void(0)" onclick="window.openLightbox('${downloadUrl}?token=${CURRENT_JWT_TOKEN}')">${att.originalFileName}</a>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="attachment-item">
+                        <span>📄</span>
+                        <a href="${downloadUrl}?token=${CURRENT_JWT_TOKEN}" target="_blank">${att.originalFileName}</a>
+                    </div>
+                `;
+            }
+        });
+        html += '</div>';
+        return html;
+    }
+
+    window.openLightbox = function(imageUrl) {
+        const lightbox = document.getElementById('image-lightbox');
+        const img = document.getElementById('lightbox-image');
+        img.src = imageUrl;
+        lightbox.style.display = 'flex';
+    };
+
+    window.closeLightbox = function() {
+        document.getElementById('image-lightbox').style.display = 'none';
+    };
+
+    window.handleFileSelect = function(event) {
+        const files = Array.from(event.target.files);
+        files.forEach(file => {
+            if (!pendingFiles.find(f => f.name === file.name && f.size === file.size)) {
+                pendingFiles.push(file);
+            }
+        });
+        updateUploadPreview();
+        event.target.value = '';
+    };
+
+    function updateUploadPreview() {
+        const container = document.getElementById('upload-preview');
+        if (!container) return;
+        let html = '';
+        pendingFiles.forEach((file, index) => {
+            const isImage = file.type.startsWith('image/');
+            if (isImage) {
+                const url = URL.createObjectURL(file);
+                html += `<div class="upload-preview-item"><img src="${url}" alt="${file.name}"><button class="remove-btn" onclick="window.removeFile(${index})">&times;</button></div>`;
+            } else {
+                html += `<div class="upload-preview-item" style="background: var(--bg); padding: 8px; border-radius: 4px;"><span style="font-size: 12px;">📄 ${file.name}</span><button class="remove-btn" onclick="window.removeFile(${index})">&times;</button></div>`;
+            }
+        });
+        container.innerHTML = html;
+    }
+
+    window.removeFile = function(index) {
+        pendingFiles.splice(index, 1);
+        updateUploadPreview();
+    };
+
+    window.submitReplyWithAttachments = async function(ticketId) {
+        const replyContent = document.getElementById('reply-content').value.trim();
+        if (!replyContent && pendingFiles.length === 0) {
+            alert('請輸入回覆內容或選擇附件');
+            return;
+        }
+
+        try {
+            let replyId = null;
+            if (replyContent) {
+                const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: replyContent })
+                });
+                const data = await response.json();
+                if (data.success && data.data) {
+                    replyId = data.data.id;
+                } else {
+                    alert(data.message || '回覆失敗');
+                    return;
+                }
+            }
+
+            for (const file of pendingFiles) {
+                const formData = new FormData();
+                formData.append('file', file);
+                if (replyId) {
+                    formData.append('replyId', replyId);
+                }
+                await fetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
+                    body: formData
+                });
+            }
+
+            pendingFiles = [];
+            window.showTicketDetail(ticketId);
+        } catch (error) {
+            alert('網路連線異常');
+        }
+    };
+
+    // 暴露到全域供 onclick 使用
+    window.showCreateTicketModal = function() {
+        document.getElementById('create-ticket-modal').style.display = 'block';
+    };
+
+    window.closeCreateTicketModal = function() {
+        document.getElementById('create-ticket-modal').style.display = 'none';
+        document.getElementById('create-ticket-form').reset();
+        document.getElementById('ticket-form-message').style.display = 'none';
+    };
+
+    window.showTicketDetail = async function(ticketId) {
+        const modal = document.getElementById('ticket-detail-modal');
+        const content = document.getElementById('ticket-detail-content');
+        
+        content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
+        modal.style.display = 'block';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    renderTicketDetail(data.data, ticketId);
+                    markRepliesAsRead(ticketId);
+                }
+            }
+        } catch (error) {
+            content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+        }
+    };
+    
+    async function markRepliesAsRead(ticketId) {
+        try {
+            await fetch(`${API_BASE_URL}/tickets/${ticketId}/mark-read`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            if (typeof updateUnreadBadge === 'function') {
+                updateUnreadBadge();
+            }
+        } catch (error) {
+            console.error('標記已讀失敗:', error);
+        }
+    }
+
+    window.closeTicketDetailModal = function() {
+        document.getElementById('ticket-detail-modal').style.display = 'none';
+    };
+
+    window.submitReply = async function(ticketId) {
+        const replyContent = document.getElementById('reply-content').value.trim();
+        if (!replyContent) {
+            alert('請輸入回覆內容');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: replyContent })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.showTicketDetail(ticketId);
+            } else {
+                alert(data.message || '回覆失敗');
+            }
+        } catch (error) {
+            alert('網路連線異常');
+        }
+    };
+})();
+</script>

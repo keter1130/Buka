@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>布卡盾 - 會員中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="/js/config.js"></script>
+    <script src="/js/datePickerEnhancer.js"></script>
+    <style>
+        /* 沿用 index.html 的設計變數 */
+        :root{
+          --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6;
+          --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); --glass: blur(14px);
+          --nav:rgba(10,22,28,0.65);
+        }
+        *{box-sizing:border-box}
+        html,body{margin:0; height:100%}
+        body{
+          font-family:"Inter","Segoe UI","Microsoft JhengHei",system-ui,sans-serif; color:var(--text);
+          background-color: var(--bg2); /* 讓背景更穩定 */
+          background-attachment:fixed;
+        }
+
+        /* ------------------------------ 佈局樣式 ------------------------------ */
+        .dashboard-layout {
+          display: flex;
+          min-height: 100vh;
+          max-width: 1400px; /* 限制最大寬度 */
+          margin: 0 auto;
+        }
+
+        /* 側邊導覽列 (Sidebar) */
+        .sidebar {
+          width: 240px;
+          flex-shrink: 0; /* 不讓它被壓縮 */
+          background-color: var(--bg);
+          border-right: 1px solid var(--border);
+          padding: 20px 0;
+          box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+          position: sticky; /* 讓側邊欄固定 */
+          top: 0;
+          height: 100vh;
+          overflow-y: auto; /* 超出時可滾動 */
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            color: var(--gold);
+            font-size: 1.2em;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+          display: block;
+          color: var(--text);
+          text-decoration: none;
+          padding: 12px 20px;
+          margin: 4px 0;
+          transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar a:hover {
+          background-color: rgba(0, 246, 255, 0.08);
+          color: var(--accent);
+        }
+        .sidebar a.active {
+          background-color: var(--accent2);
+          color: var(--bg);
+          font-weight: bold;
+          border-radius: 4px;
+          margin: 4px 10px;
+        }
+
+        /* 主要內容區 (Main Content) */
+        .main-content {
+          flex-grow: 1;
+          padding: 30px;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #current-page-title {
+          font-size: 2em;
+          font-weight: 700;
+          color: var(--accent);
+        }
+
+        #user-greeting {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        #user-greeting span {
+            color: var(--gold);
+            margin-right: 15px;
+            font-weight: 700;
+        }
+
+        /* 動態載入內容容器 */
+        #page-content {
+          min-height: 600px; /* 確保內容區有最小高度 */
+        }
+
+        /* 載入動畫樣式 */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            color: var(--muted);
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 1.1em;
+            color: var(--muted);
+        }
+        
+        .unread-badge {
+            background: #ff5050;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* 錯誤狀態樣式 */
+        .error-container {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 80, 80, 0.08);
+            border: 1px solid rgba(255, 80, 80, 0.3);
+            border-radius: 12px;
+        }
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .error-title {
+            color: #ff6b6b;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+        .retry-btn {
+            background: linear-gradient(135deg, rgba(0,246,255,.18), rgba(0,246,255,.06));
+            border: 1px solid rgba(0,246,255,.4);
+            color: var(--text);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,246,255,.2);
+        }
+
+        /* ------------------------------ 手機版樣式 ------------------------------ */
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 0;
+            }
+
+            .sidebar-header {
+                display: none; /* 手機版隱藏標題 */
+            }
+
+            .sidebar-nav {
+                 display: flex;
+                 overflow-x: auto; /* 允許側邊欄橫向滾動 */
+                 padding: 0 10px;
+                 white-space: nowrap;
+                 margin-bottom: 10px;
+                 border-bottom: 1px solid var(--border);
+            }
+
+            .sidebar a {
+                flex-shrink: 0;
+                padding: 10px 15px;
+                margin: 0;
+                border-radius: 0;
+                text-align: center;
+            }
+
+            .sidebar a.active {
+                margin: 0;
+                border-radius: 0;
+                border-bottom: 2px solid var(--accent);
+                background-color: transparent;
+                color: var(--accent);
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .header-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            #user-greeting {
+                order: -1; /* 將用戶問候移到最上面 */
+            }
+
+            #current-page-title {
+                font-size: 1.5em;
+            }
+        }
+
+        /* ------------------------------ 動態載入內容樣式 (方便快速開發) ------------------------------ */
+        /* 這是為 content/xxx.html 檔案中的內容預設的容器樣式 */
+        .content-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.45);
+            backdrop-filter: var(--glass);
+        }
+
+        .content-card h3 {
+            color: var(--accent);
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        /* 日期選擇器樣式 - 深色主題修復 */
+        input[type="date"] {
+            appearance: auto !important;
+            -webkit-appearance: auto !important;
+            -moz-appearance: textfield !important;
+            color-scheme: dark !important;
+            color: var(--text) !important;
+            background-color: var(--bg) !important;
+        }
+        input[type="date"]::-webkit-datetime-edit,
+        input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+        input[type="date"]::-webkit-datetime-edit-text,
+        input[type="date"]::-webkit-datetime-edit-month-field,
+        input[type="date"]::-webkit-datetime-edit-day-field,
+        input[type="date"]::-webkit-datetime-edit-year-field {
+            color: var(--text) !important;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) !important;
+            cursor: pointer;
+            opacity: 1 !important;
+        }
+    </style>
+<script>
+    window.showGlobalUserDetail = async function(userId) {
+        const modal = document.getElementById('global-user-detail-modal');
+        const content = document.getElementById('global-user-detail-content');
+        if (!modal || !content) return;
+        
+        modal.style.display = 'block';
+        content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
+        
+        try {
+            const token = localStorage.getItem('jwtToken');
+            const response = await fetch(`${window.API_BASE_URL || '/api'}/admin/users/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const user = data.data;
+                    content.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div><label style="color: var(--muted); font-size: 12px;">帳號</label><p style="margin: 5px 0;">${user.username || '-'}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">會員編號</label><p style="margin: 5px 0; color: var(--gold);">${user.memberNo || '-'}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">暱稱</label><p style="margin: 5px 0;">${user.nickname || '-'}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">Email</label><p style="margin: 5px 0;">${user.email || '-'}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">電話</label><p style="margin: 5px 0;">${user.phone || '-'}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">點數餘額</label><p style="margin: 5px 0; color: var(--accent);">${user.pointBalance || 0}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">狀態</label><p style="margin: 5px 0;">${user.enabled ? '<span style="color:#50ff99;">啟用</span>' : '<span style="color:#ff5050;">停用</span>'}</p></div>
+                            <div><label style="color: var(--muted); font-size: 12px;">註冊時間</label><p style="margin: 5px 0;">${user.createdAt ? new Date(user.createdAt).toLocaleString('zh-TW') : '-'}</p></div>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+                }
+            } else {
+                content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+            }
+        } catch (error) {
+            content.innerHTML = '<p style="color: #ff5050; text-align: center;">網路錯誤</p>';
+        }
+    };
+    
+    window.closeGlobalUserDetailModal = function() {
+        const modal = document.getElementById('global-user-detail-modal');
+        if (modal) modal.style.display = 'none';
+    };
+</script>
+</head>
+
+<body>
+<div class="dashboard-layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">布卡盾 | 會員中心</div>
+        <div class="sidebar-nav" id="sidebar-nav">
+            <a href="javascript:void(0)" onclick="loadContent('overview', '系統概況', this)" data-page="overview" class="active">概況</a>
+            <a href="javascript:void(0)" onclick="loadContent('instances', '我的布卡盾', this)" data-page="instances">我的布卡盾</a>
+            <a href="javascript:void(0)" onclick="loadContent('orders', '我的點數', this)" data-page="orders">我的點數</a>
+            <a href="javascript:void(0)" onclick="loadContent('tickets', '客服工單', this)" data-page="tickets">客服工單 <span id="unread-badge-user" class="unread-badge" style="display:none;"></span></a>
+            <a href="javascript:void(0)" onclick="loadContent('account', '我的帳號', this)" data-page="account">我的帳號</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="header-bar">
+            <h1 id="current-page-title">系統概況</h1>
+            <div id="user-greeting">
+                <span></span>
+                <button id="logout-btn" onclick="logoutUser()" style="
+                background: none;
+                border: 1px solid var(--border);
+                color: var(--muted);
+                cursor: pointer;
+                padding: 6px 10px;
+                border-radius: 6px;
+                font-family: inherit;
+                font-size: 0.9em;
+                transition: background 0.2s;
+            ">登出</button>
+            </div>
+        </div>
+
+        <section id="page-content">
+        </section>
+    </main>
+</div>
+
+<!-- 共用會員詳情 Modal (管理端使用) -->
+<div id="global-user-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; overflow-y: auto;">
+    <div style="max-width: 600px; margin: 50px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3 style="color: var(--gold); margin: 0;">會員詳情</h3>
+            <button onclick="window.closeGlobalUserDetailModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="global-user-detail-content"></div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+    let CURRENT_JWT_TOKEN = localStorage.getItem('jwtToken');
+    let CURRENT_USERNAME = localStorage.getItem('username');
+    let CURRENT_NICKNAME = localStorage.getItem('nickname');
+    let CURRENT_USER_ROLE = localStorage.getItem('userRole');
+    let IS_ADMIN_VIEW = false;
+
+    let FORCE_PASSWORD_CHANGE = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!CURRENT_JWT_TOKEN || !CURRENT_USERNAME) {
+            alert('您尚未登入，請先登入！');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        IS_ADMIN_VIEW = urlParams.get('admin') === 'true' && CURRENT_USER_ROLE === 'ADMIN';
+        FORCE_PASSWORD_CHANGE = urlParams.get('forcePasswordChange') === 'true' || localStorage.getItem('forcePasswordChange') === 'true';
+
+        const userGreetingSpan = document.querySelector('#user-greeting span');
+        const displayName = CURRENT_NICKNAME || CURRENT_USERNAME;
+        userGreetingSpan.textContent = `歡迎回來, ${displayName}`;
+
+        if (FORCE_PASSWORD_CHANGE) {
+            handleForcePasswordChange();
+            return;
+        }
+
+        if (IS_ADMIN_VIEW) {
+            setupAdminNav();
+            const targetPage = urlParams.get('page') || 'admin/dashboard';
+            const pageLink = document.querySelector(`a[data-page="${targetPage}"]`) || document.querySelector('a[data-page="admin/dashboard"]');
+            loadContent(targetPage, pageLink?.textContent || '管理後台', pageLink);
+        } else {
+            if (CURRENT_USER_ROLE === 'ADMIN') {
+                addAdminEntryLink();
+            }
+            loadUnreadCount('user');
+            const defaultLink = document.querySelector('a[data-page="overview"]');
+            if (defaultLink) {
+                loadContent('overview', '系統概況', defaultLink);
+            }
+        }
+    });
+
+    function handleForcePasswordChange() {
+        const sidebarNav = document.getElementById('sidebar-nav');
+        if (sidebarNav) {
+            sidebarNav.querySelectorAll('a').forEach(a => {
+                a.style.pointerEvents = 'none';
+                a.style.opacity = '0.5';
+            });
+        }
+        
+        document.getElementById('current-page-title').textContent = '修改密碼';
+        
+        const pageContent = document.getElementById('page-content');
+        pageContent.innerHTML = `
+            <div class="content-card" style="max-width: 500px; margin: 0 auto;">
+                <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid var(--gold); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="color: var(--gold); margin: 0; text-align: center;">
+                        <strong>首次登入或密碼已被重設，請先修改密碼才能繼續使用系統。</strong>
+                    </p>
+                </div>
+                <h3 style="color:var(--gold); margin-bottom: 20px;">設定新密碼</h3>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">目前密碼（臨時密碼）</label>
+                    <input type="password" id="force-current-password" placeholder="請輸入目前密碼" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">新密碼</label>
+                    <input type="password" id="force-new-password" placeholder="請輸入新密碼 (至少6字元)" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">確認新密碼</label>
+                    <input type="password" id="force-confirm-password" placeholder="請再次輸入新密碼" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                </div>
+                <button onclick="submitForcePasswordChange()" style="width: 100%; padding: 14px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;">確認修改密碼</button>
+                <div id="force-password-message" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+            </div>
+        `;
+    }
+
+    async function submitForcePasswordChange() {
+        const currentPassword = document.getElementById('force-current-password').value;
+        const newPassword = document.getElementById('force-new-password').value;
+        const confirmPassword = document.getElementById('force-confirm-password').value;
+        const msgEl = document.getElementById('force-password-message');
+
+        function showMsg(msg, isSuccess) {
+            msgEl.textContent = msg;
+            msgEl.style.display = 'block';
+            msgEl.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
+            msgEl.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
+        }
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showMsg('請填寫所有欄位', false);
+            return;
+        }
+        if (newPassword.length < 6) {
+            showMsg('新密碼至少需要 6 個字元', false);
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showMsg('兩次輸入的新密碼不一致', false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showMsg('密碼修改成功！正在重新導向...', true);
+                localStorage.removeItem('forcePasswordChange');
+                setTimeout(() => {
+                    if (CURRENT_USER_ROLE === 'ADMIN') {
+                        window.location.href = 'dashboard.html?admin=true';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                }, 1500);
+            } else {
+                showMsg(data.message || '密碼修改失敗', false);
+            }
+        } catch (error) {
+            showMsg('網路連線異常', false);
+        }
+    }
+
+    function addAdminEntryLink() {
+        const sidebarNav = document.getElementById('sidebar-nav');
+        if (sidebarNav) {
+            const adminLink = document.createElement('a');
+            adminLink.href = 'dashboard.html?admin=true';
+            adminLink.innerHTML = '進入管理後台';
+            adminLink.style.cssText = 'border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px; color: var(--gold);';
+            sidebarNav.appendChild(adminLink);
+        }
+    }
+
+    function setupAdminNav() {
+        const sidebarHeader = document.querySelector('.sidebar-header');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        
+        if (sidebarHeader) {
+            sidebarHeader.textContent = '布卡盾 | 管理後台';
+        }
+        
+        if (sidebarNav) {
+            sidebarNav.innerHTML = `
+                <a href="javascript:void(0)" onclick="loadContent('admin/dashboard', '管理員儀表板', this)" data-page="admin/dashboard" class="active">儀表板</a>
+                <a href="javascript:void(0)" onclick="loadContent('admin/users', '會員管理', this)" data-page="admin/users">會員管理</a>
+                <a href="javascript:void(0)" onclick="loadContent('admin/shields', '布卡盾管理', this)" data-page="admin/shields">布卡盾管理</a>
+                <a href="javascript:void(0)" onclick="loadContent('admin/points', '點數紀錄', this)" data-page="admin/points">點數紀錄</a>
+                <a href="javascript:void(0)" onclick="loadContent('admin/tickets', '工單管理', this)" data-page="admin/tickets">工單管理 <span id="unread-badge-admin" class="unread-badge" style="display:none;"></span></a>
+                <a href="javascript:void(0)" onclick="loadContent('admin/api-logs', 'API 日誌', this)" data-page="admin/api-logs">API 日誌</a>
+                <a href="javascript:void(0)" onclick="loadContent('admin/api-test', 'API 測試', this)" data-page="admin/api-test" style="color: var(--gold);">API 測試</a>
+                <a href="dashboard.html" style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">返回會員中心</a>
+            `;
+        }
+        loadUnreadCount('admin');
+    }
+    
+    async function loadUnreadCount(type) {
+        try {
+            const endpoint = type === 'admin' ? '/api/tickets/unread-count/admin' : '/api/tickets/unread-count';
+            const response = await fetch(endpoint, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const count = data.data.unreadCount;
+                    const badgeId = type === 'admin' ? 'unread-badge-admin' : 'unread-badge-user';
+                    const badge = document.getElementById(badgeId);
+                    if (badge) {
+                        if (count > 0) {
+                            badge.textContent = count > 99 ? '99+' : count;
+                            badge.style.display = 'inline';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load unread count:', error);
+        }
+    }
+    
+    window.updateUnreadBadge = function() {
+        const isAdmin = new URLSearchParams(window.location.search).get('admin') === 'true';
+        loadUnreadCount(isAdmin ? 'admin' : 'user');
+    };
+
+    // ----------------------------------------------------------------------
+    // 🎯 輔助函式：顯示載入動畫
+    // ----------------------------------------------------------------------
+    function showLoading(container, message = '資料載入中...') {
+        container.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">${message}</div>
+            </div>
+        `;
+    }
+
+    // ----------------------------------------------------------------------
+    // 🎯 輔助函式：顯示錯誤狀態（含重試按鈕）
+    // ----------------------------------------------------------------------
+    function showError(container, message, retryCallback) {
+        container.innerHTML = `
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">載入失敗</div>
+                <div class="error-message">${message}</div>
+                <button class="retry-btn" id="retry-btn">重新載入</button>
+            </div>
+        `;
+        if (retryCallback) {
+            document.getElementById('retry-btn').onclick = retryCallback;
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // 🎯 核心函式：動態載入內容（支援強制重新載入）
+    // ----------------------------------------------------------------------
+    let currentLoadingPage = null;
+
+    async function loadContent(pageName, titleText, currentLink) {
+        const contentArea = document.getElementById('page-content');
+        const pageTitle = document.getElementById('current-page-title');
+        const navLinks = document.querySelectorAll('.sidebar a');
+
+        if (!contentArea || !pageTitle) return;
+
+        const url = `content/${pageName}.html`;
+        const TIMEOUT_MS = 15000;
+
+        pageTitle.textContent = titleText;
+        currentLoadingPage = pageName;
+
+        navLinks.forEach(link => link.classList.remove('active'));
+        if (currentLink) {
+            currentLink.classList.add('active');
+        }
+
+        showLoading(contentArea, '頁面載入中...');
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+        const retryFn = () => loadContent(pageName, titleText, currentLink);
+
+        try {
+            const response = await fetch(url + '?t=' + Date.now(), {
+                signal: controller.signal,
+                cache: 'no-store'
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    showError(contentArea, `找不到頁面: ${pageName}`, retryFn);
+                } else {
+                    throw new Error(`伺服器錯誤 (${response.status})`);
+                }
+                return;
+            }
+
+            const htmlContent = await response.text();
+            contentArea.innerHTML = htmlContent;
+
+            const scripts = contentArea.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+
+            if (typeof window.enhanceDateInputs === 'function') {
+                setTimeout(() => window.enhanceDateInputs(), 50);
+                setTimeout(() => window.enhanceDateInputs(), 300);
+                setTimeout(() => window.enhanceDateInputs(), 800);
+            }
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('載入內容失敗:', error);
+
+            if (error.name === 'AbortError') {
+                showError(contentArea, '載入逾時，請檢查網路連線後重試。', retryFn);
+            } else {
+                showError(contentArea, `載入失敗：${error.message}`, retryFn);
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // 🎯 核心函式：登出
+    // ----------------------------------------------------------------------
+    function logoutUser() {
+        localStorage.removeItem('jwtToken');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userRole');
+
+        alert('已成功登出。');
+        window.location.href = 'index.html';
+    }
+
+    // ----------------------------------------------------------------------
+    // 🎯 共用會員詳情 Modal (管理端各頁面可呼叫)
+    // ----------------------------------------------------------------------
+    window.showGlobalUserDetail = async function(userId) {
+        const modal = document.getElementById('global-user-detail-modal');
+        const content = document.getElementById('global-user-detail-content');
+        
+        content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
+        modal.style.display = 'block';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    renderGlobalUserDetail(data.data);
+                } else {
+                    content.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+                }
+            } else {
+                content.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+            }
+        } catch (error) {
+            content.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+        }
+    };
+
+    window.closeGlobalUserDetailModal = function() {
+        document.getElementById('global-user-detail-modal').style.display = 'none';
+    };
+
+    function renderGlobalUserDetail(user) {
+        const content = document.getElementById('global-user-detail-content');
+        const statusText = user.status === 'ACTIVE' ? '正常' : '停權';
+        const statusColor = user.status === 'ACTIVE' ? '#50ff99' : '#ff5050';
+        const roleText = user.role === 'ADMIN' ? '管理員' : '一般會員';
+
+        content.innerHTML = `
+            <div style="display: grid; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; font-size: 14px;">
+                    <span style="color: var(--muted);">會員編號</span>
+                    <span style="color: var(--gold); font-family: monospace;">${user.memberNo || '-'}</span>
+                    <span style="color: var(--muted);">帳號</span>
+                    <span>${user.username}</span>
+                    <span style="color: var(--muted);">暱稱</span>
+                    <span>${user.nickname || '-'}</span>
+                    <span style="color: var(--muted);">電子郵件</span>
+                    <span>${user.email || '-'}</span>
+                    <span style="color: var(--muted);">電話</span>
+                    <span>${user.phone || '-'}</span>
+                    <span style="color: var(--muted);">角色</span>
+                    <span>${roleText}</span>
+                    <span style="color: var(--muted);">狀態</span>
+                    <span style="color: ${statusColor};">${statusText}</span>
+                    <span style="color: var(--muted);">點數餘額</span>
+                    <span style="color: var(--gold);">${user.pointBalance?.toLocaleString() || 0} 點</span>
+                    <span style="color: var(--muted);">註冊時間</span>
+                    <span>${user.createdAt ? new Date(user.createdAt).toLocaleString('zh-TW') : '-'}</span>
+                    <span style="color: var(--muted);">最後登入</span>
+                    <span>${user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('zh-TW') : '-'}</span>
+                </div>
+            </div>
+        `;
+    }
+
+</script>
+</body>
+</html>

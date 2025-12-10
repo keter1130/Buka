@@ -1,0 +1,263 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+</style>
+
+<div class="content-card">
+    <h3>廠商 API 測試</h3>
+    <p style="color: var(--muted); margin-bottom: 20px;">測試與廠商 ODM API 的連接，查看完整的請求和回應資訊。</p>
+    
+    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+        <div style="flex: 1;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text);">選擇測試類型：</label>
+            <select id="test-type" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                <option value="buy">購買測試 (BuyWHProductInfo)</option>
+                <option value="renew">續費測試 (WHRenewalFee)</option>
+                <option value="upgrade">升級測試 (WHInstanceUp)</option>
+            </select>
+        </div>
+        <div style="flex: 1;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text);">選擇產品：</label>
+            <select id="product-select" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                <option value="">載入中...</option>
+            </select>
+        </div>
+    </div>
+    
+    <div id="renew-fields" style="display: none; margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; color: var(--text);">廠商實例 ID (vendorInstanceId)：</label>
+        <input type="number" id="vendor-instance-id" placeholder="輸入實例 ID" style="width: 100%; max-width: 300px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+    </div>
+    
+    <div id="upgrade-fields" style="display: none; margin-bottom: 20px;">
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; color: var(--text);">廠商實例 ID (vendorInstanceId)：</label>
+            <input type="number" id="upgrade-instance-id" placeholder="輸入實例 ID" style="width: 100%; max-width: 300px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+        </div>
+        <div>
+            <label style="display: block; margin-bottom: 8px; color: var(--text);">升級目標產品：</label>
+            <select id="upgrade-product-select" style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                <option value="">請選擇升級目標產品</option>
+            </select>
+        </div>
+    </div>
+    
+    <button id="test-btn" onclick="window.runApiTest()" disabled style="
+        background: #555;
+        color: #999;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: not-allowed;
+        font-size: 1em;
+        font-weight: bold;
+    ">執行測試（已禁用）</button>
+    <p style="color: var(--muted); font-size: 13px; margin-top: 10px;">API 測試功能已確認正常運作，目前已禁用以避免產生不必要的測試訂單。</p>
+</div>
+
+<div class="content-card" id="result-card" style="display: none;">
+    <h3>測試結果</h3>
+    
+    <div style="margin-bottom: 20px;">
+        <h4 style="color: var(--accent); margin-bottom: 10px;">請求資訊 (Request)</h4>
+        <div style="background: var(--bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">URL:</strong>
+                <pre id="req-url" style="margin: 5px 0; color: var(--text); white-space: pre-wrap; word-break: break-all;"></pre>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">Method:</strong>
+                <span id="req-method" style="color: var(--text);"></span>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">Headers:</strong>
+                <pre id="req-headers" style="margin: 5px 0; color: var(--text); white-space: pre-wrap; word-break: break-all; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;"></pre>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">Body:</strong>
+                <pre id="req-body" style="margin: 5px 0; color: var(--text); white-space: pre-wrap; word-break: break-all; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;"></pre>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">Sign 計算公式:</strong>
+                <pre id="req-sign-format" style="margin: 5px 0; color: var(--muted); white-space: pre-wrap; word-break: break-all; font-size: 0.85em;"></pre>
+            </div>
+            <div>
+                <strong style="color: var(--gold);">MD5 加密前原始字串:</strong>
+                <pre id="req-sign-data" style="margin: 5px 0; color: var(--accent); white-space: pre-wrap; word-break: break-all; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;"></pre>
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <h4 style="color: var(--accent); margin-bottom: 10px;">廠商回應 (Response)</h4>
+        <div style="background: var(--bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">狀態:</strong>
+                <span id="res-status" style="padding: 4px 10px; border-radius: 4px; font-weight: bold;"></span>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">Code:</strong>
+                <span id="res-code" style="color: var(--text);"></span>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">訊息:</strong>
+                <span id="res-msg" style="color: var(--text);"></span>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong style="color: var(--gold);">Instance ID:</strong>
+                <span id="res-instance-id" style="color: var(--text);"></span>
+            </div>
+            <div>
+                <strong style="color: var(--gold);">原始回應 (Raw Response):</strong>
+                <pre id="res-raw" style="margin: 5px 0; color: var(--text); white-space: pre-wrap; word-break: break-all; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const API_BASE_URL = '/api';
+    const token = localStorage.getItem('jwtToken');
+    
+    let products = [];
+    
+    async function loadProducts() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/vendor/products`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                products = data.data;
+                const select = document.getElementById('product-select');
+                select.innerHTML = products.map(p => 
+                    `<option value="${p.id}" data-vendor-product-id="${p.vendorProductId}" data-vendor-pricing-id="${p.vendorPricingId}">
+                        ${p.productName} (產品ID: ${p.vendorProductId}, 定價ID: ${p.vendorPricingId})
+                    </option>`
+                ).join('');
+                
+                const upgradeSelect = document.getElementById('upgrade-product-select');
+                upgradeSelect.innerHTML = '<option value="">請選擇升級目標產品</option>' + products.map(p => 
+                    `<option value="${p.id}" data-vendor-product-id="${p.vendorProductId}" data-vendor-pricing-id="${p.vendorPricingId}">
+                        ${p.productName} (產品ID: ${p.vendorProductId}, 定價ID: ${p.vendorPricingId})
+                    </option>`
+                ).join('');
+            }
+        } catch (error) {
+            console.error('載入產品失敗:', error);
+        }
+    }
+    
+    document.getElementById('test-type').addEventListener('change', function() {
+        const renewFields = document.getElementById('renew-fields');
+        const upgradeFields = document.getElementById('upgrade-fields');
+        renewFields.style.display = this.value === 'renew' ? 'block' : 'none';
+        upgradeFields.style.display = this.value === 'upgrade' ? 'block' : 'none';
+    });
+    
+    window.runApiTest = async function() {
+        const testType = document.getElementById('test-type').value;
+        const productSelect = document.getElementById('product-select');
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        
+        if (!selectedOption || !selectedOption.dataset.vendorProductId) {
+            alert('請選擇產品');
+            return;
+        }
+        
+        const vendorProductId = parseInt(selectedOption.dataset.vendorProductId);
+        const vendorPricingId = parseInt(selectedOption.dataset.vendorPricingId);
+        
+        const testBtn = document.getElementById('test-btn');
+        testBtn.disabled = true;
+        testBtn.textContent = '測試中...';
+        
+        try {
+            let endpoint, body;
+            
+            if (testType === 'buy') {
+                endpoint = '/admin/vendor/test-buy';
+                body = { vendorProductId, vendorPricingId };
+            } else {
+                const vendorInstanceId = parseInt(document.getElementById('vendor-instance-id').value);
+                if (!vendorInstanceId) {
+                    alert('請輸入廠商實例 ID');
+                    return;
+                }
+                endpoint = '/admin/vendor/test-renew';
+                body = { vendorInstanceId, vendorPricingId };
+            }
+            
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                displayResult(data.data);
+            } else {
+                alert('測試失敗: ' + data.message);
+            }
+        } catch (error) {
+            console.error('測試失敗:', error);
+            alert('測試失敗: ' + error.message);
+        } finally {
+            testBtn.disabled = false;
+            testBtn.textContent = '執行測試';
+        }
+    };
+    
+    function displayResult(result) {
+        document.getElementById('result-card').style.display = 'block';
+        
+        const reqInfo = result.requestInfo || {};
+        document.getElementById('req-url').textContent = reqInfo.url || '';
+        document.getElementById('req-method').textContent = reqInfo.method || 'POST';
+        
+        const headers = reqInfo.headers || {};
+        document.getElementById('req-headers').textContent = Object.entries(headers)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join('\n');
+        
+        try {
+            const bodyObj = JSON.parse(reqInfo.body || '{}');
+            document.getElementById('req-body').textContent = JSON.stringify(bodyObj, null, 2);
+        } catch (e) {
+            document.getElementById('req-body').textContent = reqInfo.body || '';
+        }
+        
+        document.getElementById('req-sign-format').textContent = reqInfo.signDataFormat || '';
+        document.getElementById('req-sign-data').textContent = reqInfo.signData || '';
+        
+        const statusEl = document.getElementById('res-status');
+        if (result.succeed) {
+            statusEl.textContent = '成功';
+            statusEl.style.background = '#28a745';
+            statusEl.style.color = '#fff';
+        } else {
+            statusEl.textContent = '失敗';
+            statusEl.style.background = '#dc3545';
+            statusEl.style.color = '#fff';
+        }
+        
+        document.getElementById('res-code').textContent = result.code;
+        document.getElementById('res-msg').textContent = result.msg || '-';
+        document.getElementById('res-instance-id').textContent = result.instanceId || '-';
+        
+        try {
+            const rawObj = JSON.parse(result.rawResponse || '{}');
+            document.getElementById('res-raw').textContent = JSON.stringify(rawObj, null, 2);
+        } catch (e) {
+            document.getElementById('res-raw').textContent = result.rawResponse || '';
+        }
+    }
+    
+    loadProducts();
+})();
+</script>

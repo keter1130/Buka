@@ -1,0 +1,121 @@
+<style>
+    :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--card); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border); }
+    .stat-value { font-size: 2.5em; font-weight: 700; margin: 10px 0; }
+    .stat-label { color: var(--muted); font-size: 14px; }
+    .stat-accent { color: var(--accent); }
+    .stat-gold { color: var(--gold); }
+    .stat-warning { color: #ff9800; }
+    .stat-success { color: #50ff99; }
+</style>
+
+<div class="content-card">
+    <h3 style="margin-bottom: 25px;">管理員儀表板</h3>
+    
+    <div class="stats-grid" id="admin-stats">
+        <div class="stat-card">
+            <div class="stat-label">活躍會員</div>
+            <div class="stat-value stat-accent" id="stat-active-members">-</div>
+            <div style="color: var(--muted); font-size: 12px; margin-top: 5px;">有布卡盾</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">非活躍會員</div>
+            <div class="stat-value" style="color: #888;" id="stat-inactive-members">-</div>
+            <div style="color: var(--muted); font-size: 12px; margin-top: 5px;">無布卡盾</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">管理員</div>
+            <div class="stat-value stat-gold" id="stat-admins">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">活躍布卡盾</div>
+            <div class="stat-value stat-success" id="stat-shields">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">待處理工單</div>
+            <div class="stat-value stat-warning" id="stat-tickets">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">本月儲值</div>
+            <div class="stat-value stat-success" id="stat-recharge">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">本月消費</div>
+            <div class="stat-value stat-gold" id="stat-consumption">-</div>
+        </div>
+    </div>
+
+    <div style="background: var(--bg); padding: 20px; border-radius: 8px;">
+        <h4 style="color: var(--accent); margin-bottom: 15px;">最新待處理工單</h4>
+        <div id="pending-tickets-list">
+            <p style="color: var(--muted); text-align: center;">載入中...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    loadDashboardStats();
+    loadPendingTickets();
+
+    async function loadDashboardStats() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('stat-active-members').textContent = stats.membersWithActiveShields || 0;
+                    document.getElementById('stat-inactive-members').textContent = stats.membersWithoutActiveShields || 0;
+                    document.getElementById('stat-admins').textContent = stats.activeAdmins || 0;
+                    document.getElementById('stat-shields').textContent = stats.activeShields || 0;
+                    document.getElementById('stat-tickets').textContent = stats.pendingTickets || 0;
+                    document.getElementById('stat-recharge').textContent = (parseFloat(stats.monthlyRecharge) || 0).toLocaleString() + ' 點';
+                    document.getElementById('stat-consumption').textContent = (parseFloat(stats.monthlyConsumption) || 0).toLocaleString() + ' 點';
+                }
+            }
+        } catch (error) {
+            console.error('載入統計失敗:', error);
+        }
+    }
+
+    async function loadPendingTickets() {
+        const container = document.getElementById('pending-tickets-list');
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/tickets/pending`, {
+                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const tickets = data.data;
+                    if (!tickets || tickets.length === 0) {
+                        container.innerHTML = '<p style="color: var(--muted); text-align: center;">沒有待處理的工單</p>';
+                        return;
+                    }
+                    let html = '';
+                    tickets.slice(0, 5).forEach(ticket => {
+                        html += `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                                <div>
+                                    <span style="color: var(--muted); font-family: monospace; font-size: 13px;">${ticket.ticketNo}</span>
+                                    <span style="margin-left: 10px;">${ticket.subject}</span>
+                                </div>
+                                <span style="color: var(--muted); font-size: 13px;">${new Date(ticket.createdAt).toLocaleDateString('zh-TW')}</span>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }
+            }
+        } catch (error) {
+            container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+        }
+    }
+})();
+</script>
