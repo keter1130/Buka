@@ -566,7 +566,7 @@
     
     async function loadUnreadCount(type) {
         try {
-            const endpoint = type === 'admin' ? '/api/tickets/unread-count/admin' : '/api/tickets/unread-count';
+            const endpoint = type === 'admin' ? `${API_BASE_URL}/tickets/unread-count/admin` : `${API_BASE_URL}/tickets/unread-count`;
             const response = await apiFetch(endpoint, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
