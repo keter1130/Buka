@@ -2,7 +2,7 @@
     const hostname = window.location.hostname;
     
     if (hostname === 'buka.tw' || hostname === 'www.buka.tw') {
-        window.API_BASE_URL = 'https://uncomely-janessa-pardonably.ngrok-free.dev';
+        window.API_BASE_URL = 'https://uncomely-janessa-pardonably.ngrok-free.dev/api';
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         window.API_BASE_URL = '/api';
     } else {
