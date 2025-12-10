@@ -142,7 +142,7 @@
         content.innerHTML = '<p style="text-align: center; color: #a9bac6;">載入中...</p>';
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -216,7 +216,7 @@
     async function loadMemberShields(userId) {
         const container = document.getElementById('member-shields-list');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -252,7 +252,7 @@
         if (!description) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json', 'X-Unlock-Token': getUnlockToken() },
                     body: JSON.stringify({ amount: parseFloat(amount), description })
@@ -268,7 +268,7 @@
         if (!confirm('確定要重設此會員的密碼嗎？')) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
                 });
@@ -288,7 +288,7 @@
         if (!confirm(`確定要${action}此會員嗎？`)) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
                 });
@@ -325,7 +325,7 @@
     async function loadAllTickets() {
         const container = document.getElementById('tickets-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -658,7 +658,7 @@
             const contentToSend = replyContent || (pendingFiles.length > 0 ? '(附件)' : '');
             
             if (contentToSend) {
-                const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -681,7 +681,7 @@
                 if (replyId) {
                     formData.append('replyId', replyId);
                 }
-                await fetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
                     body: formData
@@ -712,7 +712,7 @@
         modal.style.display = 'block';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/${ticketId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -745,7 +745,7 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/${ticketId}/replies`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -769,7 +769,7 @@
         if (!confirm('確定要結案此工單嗎？')) return;
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/close`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/${ticketId}/close`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
@@ -791,7 +791,7 @@
         const originalValue = select.getAttribute('data-original') || select.value;
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/status`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/${ticketId}/status`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -835,7 +835,7 @@
         container.style.display = 'block';
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets/replies/${replyId}/read-logs`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/replies/${replyId}/read-logs`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 

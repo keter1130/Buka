@@ -123,7 +123,7 @@
     
     async function loadProducts() {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/vendor/products`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/vendor/products`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -188,7 +188,7 @@
                 body = { vendorInstanceId, vendorPricingId };
             }
             
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            const response = await apiFetch(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

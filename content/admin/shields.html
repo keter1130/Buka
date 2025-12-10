@@ -103,7 +103,7 @@
         content.innerHTML = '<p style="text-align: center; color: #a9bac6;">載入中...</p>';
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -177,7 +177,7 @@
     async function loadMemberShieldsForDetail(userId) {
         const container = document.getElementById('member-shields-list');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -213,7 +213,7 @@
         if (!description) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'Content-Type': 'application/json', 'X-Unlock-Token': getUnlockToken() },
                     body: JSON.stringify({ amount: parseFloat(amount), description })
@@ -229,7 +229,7 @@
         if (!confirm('確定要重設此會員的密碼嗎？')) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
                 });
@@ -249,7 +249,7 @@
         if (!confirm(`確定要${action}此會員嗎？`)) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
                 });
@@ -283,7 +283,7 @@
     async function loadShieldsByUserId(userId) {
         const container = document.getElementById('shields-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -316,7 +316,7 @@
                 url = `${API_BASE_URL}/admin/shields?status=${status}`;
             }
 
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -407,7 +407,7 @@
 
     window.openControlPanel = async function(shieldId) {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/${shieldId}/sso-url`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/${shieldId}/sso-url`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             
@@ -429,7 +429,7 @@
 
     window.viewShieldDetail = async function(shieldId) {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/${shieldId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/${shieldId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -536,7 +536,7 @@
 
     async function loadStats() {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {

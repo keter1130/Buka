@@ -165,7 +165,7 @@
         }
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/verify-password`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/verify-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -199,7 +199,7 @@
     window.loadUsers = async function() {
         const container = document.getElementById('users-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/users?includeAdmin=true`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/users?includeAdmin=true`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -466,7 +466,7 @@
     async function loadUserShields(userId) {
         const container = document.getElementById('user-shields-list');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             
@@ -524,7 +524,7 @@
         modal.style.display = 'block';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -555,7 +555,7 @@
 
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -584,7 +584,7 @@
 
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
                     method: 'POST',
                     headers: { 
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -617,7 +617,7 @@
 
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
                     method: 'POST',
                     headers: { 
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,

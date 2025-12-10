@@ -112,7 +112,7 @@
         currentDetailUserId = userId;
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -186,7 +186,7 @@
     async function loadMemberShields(userId) {
         const container = document.getElementById('member-shields-list');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
             if (response.ok) {
@@ -226,7 +226,7 @@
         
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
@@ -253,7 +253,7 @@
         if (!confirm('確定要重設此會員的密碼嗎？')) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
                 });
@@ -280,7 +280,7 @@
         if (!confirm(`確定要${action}此會員嗎？`)) return;
         requireUnlock(async function() {
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`, 'X-Unlock-Token': getUnlockToken() }
                 });
@@ -337,7 +337,7 @@
     async function loadTransactionsByUserId(userId) {
         const container = document.getElementById('points-container');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/points/user/${userId}`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/points/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -366,7 +366,7 @@
             if (type) params.push(`type=${type}`);
             if (params.length > 0) url += '?' + params.join('&');
 
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 

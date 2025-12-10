@@ -61,7 +61,7 @@
 
     async function loadDashboardStats() {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/dashboard`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
@@ -86,7 +86,7 @@
     async function loadPendingTickets() {
         const container = document.getElementById('pending-tickets-list');
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/tickets/pending`, {
+            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/pending`, {
                 headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
             });
 
