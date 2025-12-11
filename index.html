@@ -488,7 +488,10 @@
         </div>
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">密碼</label>
-            <input type="password" id="login-password" placeholder="請輸入密碼" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <div style="position: relative;">
+                <input type="password" id="login-password" placeholder="請輸入密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                <button type="button" onclick="togglePassword('login-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+            </div>
         </div>
         <div style="text-align: right; margin-bottom: 20px;">
             <a href="#" onclick="showForgotPasswordForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 13px;">忘記密碼？</a>
@@ -507,11 +510,17 @@
         </div>
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">密碼</label>
-            <input type="password" id="register-password" placeholder="請輸入密碼 (至少6個字元)" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <div style="position: relative;">
+                <input type="password" id="register-password" placeholder="請輸入密碼 (至少6個字元)" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                <button type="button" onclick="togglePassword('register-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+            </div>
         </div>
         <div style="margin-bottom: 20px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">確認密碼</label>
-            <input type="password" id="register-password-confirm" placeholder="請再次輸入密碼" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <div style="position: relative;">
+                <input type="password" id="register-password-confirm" placeholder="請再次輸入密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                <button type="button" onclick="togglePassword('register-password-confirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+            </div>
         </div>
         <button onclick="registerUser()" style="width: 100%; padding: 14px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;">註冊</button>
     </div>
@@ -822,6 +831,17 @@
                         if (authSection) authSection.style.display = 'none';
                         if (authOverlay) authOverlay.style.display = 'none';
                         hideMessage();
+                }
+
+                function togglePassword(inputId, btn) {
+                        const input = document.getElementById(inputId);
+                        if (input.type === 'password') {
+                                input.type = 'text';
+                                btn.textContent = '🙈';
+                        } else {
+                                input.type = 'password';
+                                btn.textContent = '👁';
+                        }
                 }
 
                 function switchAuthTab(tab) {

@@ -17,7 +17,8 @@
     .ticket-no { color: var(--muted); font-size: 13px; font-family: monospace; }
     .ticket-status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
     .status-pending { background: rgba(255, 215, 0, 0.15); color: var(--gold); }
-    .status-processing { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
+    .status-processing { background: rgba(255, 165, 0, 0.15); color: #ffa500; }
+    .status-replied { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
     .status-closed { background: rgba(80, 255, 150, 0.15); color: #50ff99; }
     .ticket-subject { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
     .ticket-meta { display: flex; gap: 20px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
@@ -73,7 +74,8 @@
     <div class="filter-bar">
         <button class="filter-btn active" onclick="window.filterAdminTickets('all', this)">全部</button>
         <button class="filter-btn" onclick="window.filterAdminTickets('PENDING', this)">待處理</button>
-        <button class="filter-btn" onclick="window.filterAdminTickets('PROCESSING', this)">處理中</button>
+        <button class="filter-btn" onclick="window.filterAdminTickets('PROCESSING', this)">會員已回覆</button>
+        <button class="filter-btn" onclick="window.filterAdminTickets('REPLIED', this)">已回覆</button>
         <button class="filter-btn" onclick="window.filterAdminTickets('CLOSED', this)">已結案</button>
         <div style="flex: 1;"></div>
         <input type="date" id="filter-start-date" class="date-input" data-enhance="calendar">
@@ -128,6 +130,10 @@
 
 <script>
 (function() {
+    const API_BASE_URL = window.API_BASE_URL || (window.parent && window.parent.API_BASE_URL) || '';
+    const CURRENT_JWT_TOKEN = localStorage.getItem('jwtToken') || '';
+    const apiFetch = window.apiFetch || window.parent.apiFetch || fetch;
+    
     let allTickets = [];
     let currentFilter = 'all';
     let currentTicketId = null;
@@ -396,9 +402,10 @@
         const endIdx = startIdx + pageSize;
         const pageData = tickets.slice(startIdx, endIdx);
 
-        const statusMap = {
+        const statusMap = window.ADMIN_STATUS_MAP || {
             'PENDING': { label: '待處理', class: 'status-pending' },
-            'PROCESSING': { label: '處理中', class: 'status-processing' },
+            'PROCESSING': { label: '會員已回覆', class: 'status-processing' },
+            'REPLIED': { label: '已回覆', class: 'status-replied' },
             'CLOSED': { label: '已結案', class: 'status-closed' }
         };
 
@@ -461,9 +468,10 @@
             <span class="quick-link" onclick="window.goToMemberShields(${ticket.userId}, '${ticket.memberCode || ''}')">會員布卡盾</span>
         `;
         
-        const statusMap = {
+        const statusMap = window.ADMIN_STATUS_MAP || {
             'PENDING': { label: '待處理', class: 'status-pending' },
-            'PROCESSING': { label: '處理中', class: 'status-processing' },
+            'PROCESSING': { label: '會員已回覆', class: 'status-processing' },
+            'REPLIED': { label: '已回覆', class: 'status-replied' },
             'CLOSED': { label: '已結案', class: 'status-closed' }
         };
         const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
@@ -525,7 +533,8 @@
                     <span style="display: flex; align-items: center; gap: 6px;">狀態：
                         <select id="ticket-status-select" onchange="window.changeTicketStatus(${ticketId}, this.value)" style="padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 12px;">
                             <option value="PENDING" ${ticket.status === 'PENDING' ? 'selected' : ''}>待處理</option>
-                            <option value="PROCESSING" ${ticket.status === 'PROCESSING' ? 'selected' : ''}>處理中</option>
+                            <option value="PROCESSING" ${ticket.status === 'PROCESSING' ? 'selected' : ''}>會員已回覆</option>
+                            <option value="REPLIED" ${ticket.status === 'REPLIED' ? 'selected' : ''}>已回覆</option>
                             <option value="CLOSED" ${ticket.status === 'CLOSED' ? 'selected' : ''}>已結案</option>
                         </select>
                     </span>

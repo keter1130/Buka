@@ -53,15 +53,24 @@
                 <h4 style="color: var(--accent); margin-bottom: 20px;">修改密碼</h4>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">目前密碼</label>
-                    <input type="password" id="current-password" placeholder="請輸入目前密碼" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <div style="position: relative;">
+                        <input type="password" id="current-password" placeholder="請輸入目前密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                        <button type="button" onclick="window.togglePwd('current-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                    </div>
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">新密碼</label>
-                    <input type="password" id="new-password" placeholder="請輸入新密碼 (至少6字元)" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <div style="position: relative;">
+                        <input type="password" id="new-password" placeholder="請輸入新密碼 (至少6字元)" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                        <button type="button" onclick="window.togglePwd('new-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                    </div>
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">確認新密碼</label>
-                    <input type="password" id="confirm-password" placeholder="請再次輸入新密碼" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <div style="position: relative;">
+                        <input type="password" id="confirm-password" placeholder="請再次輸入新密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                        <button type="button" onclick="window.togglePwd('confirm-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                    </div>
                 </div>
                 <button onclick="window.changePassword()" style="width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">修改密碼</button>
                 <div id="password-message" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
@@ -72,6 +81,17 @@
 
 <script>
 (function() {
+    window.togglePwd = function(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁';
+        }
+    };
+
     loadProfile();
 
     async function loadProfile() {

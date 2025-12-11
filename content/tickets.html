@@ -6,7 +6,8 @@
     .ticket-no { color: var(--muted); font-size: 13px; font-family: monospace; }
     .ticket-status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
     .status-pending { background: rgba(255, 215, 0, 0.15); color: var(--gold); }
-    .status-processing { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
+    .status-processing { background: rgba(255, 215, 0, 0.15); color: var(--gold); }
+    .status-replied { background: rgba(0, 200, 255, 0.15); color: var(--accent); }
     .status-closed { background: rgba(80, 255, 150, 0.15); color: #50ff99; }
     .ticket-subject { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
     .ticket-meta { display: flex; gap: 20px; color: var(--muted); font-size: 13px; }
@@ -68,8 +69,8 @@
 
     <div class="filter-bar">
         <button class="filter-btn active" onclick="window.filterTickets('all', this)">全部</button>
-        <button class="filter-btn" onclick="window.filterTickets('PENDING', this)">待處理</button>
-        <button class="filter-btn" onclick="window.filterTickets('PROCESSING', this)">處理中</button>
+        <button class="filter-btn" onclick="window.filterTickets('WAITING', this)">等待客服回覆</button>
+        <button class="filter-btn" onclick="window.filterTickets('REPLIED', this)">客服已回覆</button>
         <button class="filter-btn" onclick="window.filterTickets('CLOSED', this)">已結案</button>
         <div style="flex: 1;"></div>
         <input type="date" id="filter-start-date" class="form-input" style="padding: 8px 12px; max-width: 140px;" data-enhance="calendar">
@@ -112,6 +113,14 @@
                 <label>問題描述</label>
                 <textarea id="ticket-content" class="form-input" placeholder="請詳細描述您遇到的問題..." required></textarea>
             </div>
+            <div class="form-group">
+                <label>附件（選填，最多 5 個檔案）</label>
+                <div class="file-upload-area">
+                    <input type="file" id="create-ticket-files" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="window.previewCreateTicketFiles(this)">
+                    <label for="create-ticket-files" class="file-upload-btn">+ 選擇檔案</label>
+                    <div id="create-ticket-preview" class="upload-preview"></div>
+                </div>
+            </div>
             <div id="ticket-form-message" style="margin-bottom: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
             <button type="submit" class="btn-primary" style="width: 100%;">送出工單</button>
         </form>
@@ -138,6 +147,10 @@
 
 <script>
 (function() {
+    const API_BASE_URL = window.API_BASE_URL || (window.parent && window.parent.API_BASE_URL) || '';
+    const CURRENT_JWT_TOKEN = localStorage.getItem('jwtToken') || '';
+    const apiFetch = window.apiFetch || window.parent.apiFetch || fetch;
+    
     let categoriesData = [];
     let allTickets = [];
     let currentFilter = 'all';
@@ -239,7 +252,11 @@
         let filtered = allTickets;
 
         if (currentFilter !== 'all') {
-            filtered = filtered.filter(t => t.status === currentFilter);
+            if (currentFilter === 'WAITING') {
+                filtered = filtered.filter(t => t.status === 'PENDING' || t.status === 'PROCESSING');
+            } else {
+                filtered = filtered.filter(t => t.status === currentFilter);
+            }
         }
         if (startDate) {
             const start = new Date(startDate);
@@ -276,9 +293,10 @@
         const endIdx = startIdx + pageSize;
         const pageData = tickets.slice(startIdx, endIdx);
 
-        const statusMap = {
-            'PENDING': { label: '待處理', class: 'status-pending' },
-            'PROCESSING': { label: '處理中', class: 'status-processing' },
+        const statusMap = window.MEMBER_STATUS_MAP || {
+            'PENDING': { label: '等待客服回覆', class: 'status-pending' },
+            'PROCESSING': { label: '等待客服回覆', class: 'status-processing' },
+            'REPLIED': { label: '客服已回覆', class: 'status-replied' },
             'CLOSED': { label: '已結案', class: 'status-closed' }
         };
 
@@ -322,6 +340,43 @@
         container.innerHTML = html;
     }
 
+    let createTicketFiles = [];
+    
+    window.previewCreateTicketFiles = function(input) {
+        const preview = document.getElementById('create-ticket-preview');
+        const files = Array.from(input.files).slice(0, 5);
+        createTicketFiles = files;
+        
+        preview.innerHTML = '';
+        files.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.className = 'upload-preview-item';
+            
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                item.appendChild(img);
+            } else {
+                const icon = document.createElement('div');
+                icon.style.cssText = 'width: 50px; height: 50px; background: var(--card); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted);';
+                icon.textContent = file.name.split('.').pop().toUpperCase();
+                item.appendChild(icon);
+            }
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = '×';
+            removeBtn.onclick = (e) => {
+                e.preventDefault();
+                createTicketFiles = createTicketFiles.filter((_, i) => i !== index);
+                window.previewCreateTicketFiles({ files: createTicketFiles });
+            };
+            item.appendChild(removeBtn);
+            
+            preview.appendChild(item);
+        });
+    };
+    
     async function createTicket() {
         const categoryId = document.getElementById('ticket-category').value;
         const subject = document.getElementById('ticket-subject').value.trim();
@@ -345,7 +400,25 @@
             const data = await response.json();
 
             if (data.success) {
+                const ticketId = data.data.id;
+                
+                if (createTicketFiles.length > 0) {
+                    showFormMessage('正在上傳附件...', true);
+                    for (const file of createTicketFiles) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
+                            body: formData
+                        });
+                    }
+                }
+                
                 showFormMessage('工單已送出！', true);
+                createTicketFiles = [];
+                document.getElementById('create-ticket-preview').innerHTML = '';
+                document.getElementById('create-ticket-files').value = '';
                 setTimeout(() => {
                     window.closeCreateTicketModal();
                     loadMyTickets();
@@ -379,9 +452,10 @@
         titleEl.textContent = ticket.ticketNo;
         createdTimeEl.textContent = new Date(ticket.createdAt).toLocaleString('zh-TW');
         
-        const statusMap = {
-            'PENDING': { label: '待處理', class: 'status-pending' },
-            'PROCESSING': { label: '處理中', class: 'status-processing' },
+        const statusMap = window.MEMBER_STATUS_MAP || {
+            'PENDING': { label: '等待客服回覆', class: 'status-pending' },
+            'PROCESSING': { label: '等待客服回覆', class: 'status-processing' },
+            'REPLIED': { label: '客服已回覆', class: 'status-replied' },
             'CLOSED': { label: '已結案', class: 'status-closed' }
         };
         const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
