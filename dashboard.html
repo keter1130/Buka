@@ -302,7 +302,7 @@
         
         try {
             const token = localStorage.getItem('jwtToken');
-            const response = await apiFetch(`${window.API_BASE_URL || '/api'}/admin/users/${userId}`, {
+            const response = await apiFetch(`${window.API_BASE_URL || ''}/admin/users/${userId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -390,7 +390,7 @@
 </div>
 
 <script>
-    const API_BASE_URL = window.API_BASE_URL || '/api';
+    const API_BASE_URL = window.API_BASE_URL || '';
     let CURRENT_JWT_TOKEN = localStorage.getItem('jwtToken');
     let CURRENT_USERNAME = localStorage.getItem('username');
     let CURRENT_NICKNAME = localStorage.getItem('nickname');
