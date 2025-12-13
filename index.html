@@ -1106,6 +1106,26 @@
                         const menuToggle = document.querySelector('.menu-toggle');
                         const navLinks = document.getElementById('nav-links');
                         
+                        // 登入表單 Enter 鍵支援
+                        const loginUsername = document.getElementById('login-username');
+                        const loginPassword = document.getElementById('login-password');
+                        if (loginUsername) loginUsername.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
+                        if (loginPassword) loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
+                        
+                        // 註冊表單 Enter 鍵支援
+                        const registerUsername = document.getElementById('register-username');
+                        const registerEmail = document.getElementById('register-email');
+                        const registerPassword = document.getElementById('register-password');
+                        const registerConfirm = document.getElementById('register-password-confirm');
+                        if (registerUsername) registerUsername.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                        if (registerEmail) registerEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                        if (registerPassword) registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                        if (registerConfirm) registerConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                        
+                        // 忘記密碼 Enter 鍵支援
+                        const forgotEmail = document.getElementById('forgot-email');
+                        if (forgotEmail) forgotEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') forgotPassword(); });
+                        
                         // 確保元素存在
                         if (!menuToggle || !navLinks) return;
                         

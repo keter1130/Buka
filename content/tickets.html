@@ -1,3 +1,4 @@
+<script src="/js/config.js"></script>
 <style>
     :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
     .ticket-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
@@ -294,8 +295,8 @@
         const pageData = tickets.slice(startIdx, endIdx);
 
         const statusMap = window.MEMBER_STATUS_MAP || {
-            'PENDING': { label: '等待客服回覆', class: 'status-pending' },
-            'PROCESSING': { label: '等待客服回覆', class: 'status-processing' },
+            'PENDING': { label: '待處理', class: 'status-pending' },
+            'PROCESSING': { label: '處理中', class: 'status-processing' },
             'REPLIED': { label: '客服已回覆', class: 'status-replied' },
             'CLOSED': { label: '已結案', class: 'status-closed' }
         };
@@ -453,8 +454,8 @@
         createdTimeEl.textContent = new Date(ticket.createdAt).toLocaleString('zh-TW');
         
         const statusMap = window.MEMBER_STATUS_MAP || {
-            'PENDING': { label: '等待客服回覆', class: 'status-pending' },
-            'PROCESSING': { label: '等待客服回覆', class: 'status-processing' },
+            'PENDING': { label: '待處理', class: 'status-pending' },
+            'PROCESSING': { label: '處理中', class: 'status-processing' },
             'REPLIED': { label: '客服已回覆', class: 'status-replied' },
             'CLOSED': { label: '已結案', class: 'status-closed' }
         };
