@@ -116,7 +116,7 @@
 
 <script>
 (function() {
-    const API_BASE_URL = '/api';
+    const API_BASE_URL = window.API_BASE_URL || (window.parent && window.parent.API_BASE_URL) || '';
     const token = localStorage.getItem('jwtToken');
     
     let products = [];

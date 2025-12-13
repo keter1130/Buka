@@ -469,6 +469,16 @@
             repliesHtml = '<p style="color: var(--muted); text-align: center;">尚無回覆</p>';
         } else {
             replies.forEach(reply => {
+                const isSystemLog = reply.content && reply.content.startsWith('[系統紀錄]');
+                if (isSystemLog && reply.content.includes('變更為「已回覆」')) {
+                    return;
+                }
+                
+                let displayContent = reply.content;
+                if (isSystemLog) {
+                    displayContent = displayContent.replace(/\[系統紀錄\]\s*\S+\s*將/, '[系統紀錄] 客服將');
+                }
+                
                 const replyDate = new Date(reply.createdAt).toLocaleString('zh-TW');
                 const isAdmin = reply.userRole === 'ADMIN';
                 const replyAttachments = reply.attachments || [];
@@ -480,7 +490,7 @@
                             <span style="font-weight: 600; color: ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">${isAdmin ? '客服回覆' : '您'}</span>
                             <span style="color: var(--muted); font-size: 12px;">${replyDate}</span>
                         </div>
-                        <p style="white-space: pre-wrap; margin: 0;">${reply.content}</p>
+                        <p style="white-space: pre-wrap; margin: 0;">${displayContent}</p>
                         ${replyAttachmentsHtml ? `<div style="margin-top: 10px;">${replyAttachmentsHtml}</div>` : ''}
                     </div>
                 `;

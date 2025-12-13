@@ -51,7 +51,7 @@
         
         const response = await fetch(url, options);
         
-        if (response.status === 401 && !isAuthWhitelisted(url)) {
+        if ((response.status === 401 || response.status === 403) && !isAuthWhitelisted(url)) {
             window.handleAuthError();
             throw new Error('Authentication expired');
         }
