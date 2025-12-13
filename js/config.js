@@ -32,6 +32,17 @@
         }
     };
     
+    const AUTH_WHITELIST = [
+        '/users/login',
+        '/users/register',
+        '/users/forgot-password',
+        '/users/reset-password'
+    ];
+    
+    function isAuthWhitelisted(url) {
+        return AUTH_WHITELIST.some(path => url.includes(path));
+    }
+    
     window.apiFetch = async function(url, options = {}) {
         options.headers = {
             'ngrok-skip-browser-warning': 'true',
@@ -40,7 +51,7 @@
         
         const response = await fetch(url, options);
         
-        if (response.status === 401) {
+        if (response.status === 401 && !isAuthWhitelisted(url)) {
             window.handleAuthError();
             throw new Error('Authentication expired');
         }
