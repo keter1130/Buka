@@ -1,379 +1,305 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>布卡盾 - 官方網站</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <script src="/js/config.js"></script>
-<style>
-    :root{
-      --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6;
-      --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); --glass: blur(14px);
-      --nav:rgba(10,22,28,0.65);
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0; height:100%}
-    body{
-      font-family:"Inter","Segoe UI","Microsoft JhengHei",system-ui,sans-serif; color:var(--text);
-      background:
-        radial-gradient(900px 500px at 85% 10%, rgba(0,246,255,0.12), transparent 60%),
-        radial-gradient(700px 500px at 10% 20%, rgba(255,215,0,0.08), transparent 70%),
-        linear-gradient(135deg, #07161b, var(--bg2));
-      background-attachment:fixed;
-    }
-    /* Nav 導覽列樣式 */
-    /* === 調整 1: 提高 NAV Z-index，確保導覽列在最頂層 === */
-    .nav{
-      position:sticky; top:0; z-index:999; backdrop-filter: saturate(150%) blur(10px);
-      background:var(--nav); border-bottom:1px solid var(--border);
-    }
-    
-        
-    /* Nav 內容容器 - 導覽列高度的最終控制點 */
-    .nav-inner{
-      max-width:1150px; 
-      margin:0 auto; 
-      display:flex; 
-      align-items:center; 
-      justify-content: space-between; 
-      gap:16px; 
-      /* === 修正 1: 移除固定高度，改回動態 Padding === */
-      padding: 12px 20px; 
-    }
-    
-    .nav-logo{
-      display:flex; 
-      align-items:center; 
-      gap:10px; 
-      color:#fff; 
-      text-decoration:none; 
-      font-weight:800;
-      /* === 修正 2: 設定 Logo 區域的基準字體大小 === */
-      font-size: 20px; 
-      /* height: 100%; (移除) */
-    }
-    
-        /* 導覽列 Logo 圖片尺寸 (已替換為圖片) */
-        .nav-logo img{
-        /* === 修正 3: Logo 高度改為 "em" 單位，使其動態關聯文字大小 === */
-                height: 2.5em; /* 2 * 20px = 40px */
-                width: auto; 
+    <meta charset="UTF-8">
+    <title>布卡盾 - 官方網站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="/js/config.js"></script>
+    <script src="/js/password-strength.js"></script>
+    <style>
+        :root{
+          --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6;
+          --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); --glass: blur(14px);
+          --nav:rgba(10,22,28,0.65);
         }
-    
-    .nav-links{
-      margin-left:auto; 
-      display:flex; 
-      gap:14px;
-      /* height: 100%; (移除) */
-    }
-    
-        /* === 修正 4: 導覽連結改回 Padding 控制，以匹配動態高度 === */
-    .nav-links a{
-      color:#cfe7ee; 
-      text-decoration:none; 
-      padding: 8px 12px; 
-      border-radius:8px; 
-      transition:.2s;
-      /* 移除 display:flex, align-items:center, height:100% */
-    }
-    .nav-links a:hover{background:rgba(255,255,255,0.08)}
-    
-    /* 漢堡選單按鈕 - 預設隱藏 (桌面版) */
-    .menu-toggle {
-        display: none; 
-        background: none;
-        border: none;
-        color: var(--text);
-        font-size: 24px;
-        cursor: pointer;
-        padding: 0;
-        /* === 調整 2: 提高 MENU-TOGGLE Z-index，確保按鈕在最頂層 === */
-        z-index: 1000;
-    }
-    /* 漢堡選單圖標 */
-    .hamburger {
-        display: block;
-        width: 24px;
-        height: 2px;
-        background: var(--text);
-        border-radius: 2px;
-        position: relative;
-        transition: .2s;
-    }
-    .hamburger::before,
-    .hamburger::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 2px;
-        background: var(--text);
-        border-radius: 2px;
-        transition: .2s;
-    }
-    .hamburger::before { top: -8px; }
-    .hamburger::after { top: 8px; }
-    
-    /* 漢堡選單關閉狀態 (X) 樣式 */
-    .menu-toggle.open .hamburger { background: transparent; }
-    .menu-toggle.open .hamburger::before { transform: translateY(8px) rotate(45deg); }
-    .menu-toggle.open .hamburger::after { transform: translateY(-8px) rotate(-45deg); }
+        *{box-sizing:border-box}
+        html,body{margin:0; height:100%}
+        body{
+          font-family:"Inter","Segoe UI","Microsoft JhengHei",system-ui,sans-serif; color:var(--text);
+          background:
+            radial-gradient(900px 500px at 85% 10%, rgba(0,246,255,0.12), transparent 60%),
+            radial-gradient(700px 500px at 10% 20%, rgba(255,215,0,0.08), transparent 70%),
+            linear-gradient(135deg, #07161b, var(--bg2));
+          background-attachment:fixed;
+        }
+        /* Nav 導覽列樣式 */
+        .nav{
+          position:sticky; top:0; z-index:999; backdrop-filter: saturate(150%) blur(10px);
+          background:var(--nav); border-bottom:1px solid var(--border);
+        }
 
+        .nav-inner{
+          max-width:1150px;
+          margin:0 auto;
+          display:flex;
+          align-items:center;
+          justify-content: space-between;
+          gap:16px;
+          padding: 12px 20px;
+        }
 
-    /* Header 首頁標題區樣式 */
-    /* 沿用使用者提供的更緊湊的數值 */
-    header{position:relative; padding:60px 24px 5px; text-align:center; overflow:hidden}
-    .stars{position:absolute; inset:0; pointer-events:none}
-    .stars span{
-      position:absolute; width:2px; height:2px; background:rgba(255,255,255,0.8); border-radius:50%;
-      box-shadow:0 0 10px rgba(255,255,255,0.8);
-      animation: twinkle 3s infinite;
-    }
-    @keyframes twinkle { 0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:1; transform:scale(1.6)} }
-    
-    .logo-container {
-        display: flex; 
-        justify-content: center; 
-        margin: 0 auto 12px auto; 
-    }
+        .nav-logo{
+          display:flex;
+          align-items:center;
+          gap:10px;
+          color:#fff;
+          text-decoration:none;
+          font-weight:800;
+          font-size: 20px;
+        }
+
+        .nav-logo img{
+            height: 2.5em;
+            width: auto;
+        }
+
+        .nav-links{
+          margin-left:auto;
+          display:flex;
+          gap:14px;
+        }
+
+        .nav-links a{
+          color:#cfe7ee;
+          text-decoration:none;
+          padding: 8px 12px;
+          border-radius:8px;
+          transition:.2s;
+        }
+        .nav-links a:hover{background:rgba(255,255,255,0.08)}
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1000;
+        }
+        .hamburger {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text);
+            border-radius: 2px;
+            position: relative;
+            transition: .2s;
+        }
+        .hamburger::before,
+        .hamburger::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--text);
+            border-radius: 2px;
+            transition: .2s;
+        }
+        .hamburger::before { top: -8px; }
+        .hamburger::after { top: 8px; }
+
+        .menu-toggle.open .hamburger { background: transparent; }
+        .menu-toggle.open .hamburger::before { transform: translateY(8px) rotate(45deg); }
+        .menu-toggle.open .hamburger::after { transform: translateY(-8px) rotate(-45deg); }
+
+        header{position:relative; padding:60px 24px 5px; text-align:center; overflow:hidden}
+        .stars{position:absolute; inset:0; pointer-events:none}
+        .stars span{
+          position:absolute; width:2px; height:2px; background:rgba(255,255,255,0.8); border-radius:50%;
+          box-shadow:0 0 10px rgba(255,255,255,0.8);
+          animation: twinkle 3s infinite;
+        }
+        @keyframes twinkle { 0%,100%{opacity:.4; transform:scale(1)} 50%{opacity:1; transform:scale(1.6)} }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin: 0 auto 12px auto;
+        }
 
         #header-logo {
-                width: auto;
-                height: 50vw; 
-                max-width: 100%;
-                max-height: 280px;
-                max-width: 280px;
+            width: auto;
+            height: 50vw;
+            max-width: 100%;
+            max-height: 280px;
+            max-width: 280px;
         }
-    
-    .brand{
-      display:inline-flex; 
-      align-items:center; 
-      gap:18px; 
-      position:relative; 
-      margin-bottom: 24px; 
-    } 
-    
-    .title{font-size:52px; font-weight:900; letter-spacing:.7px; color:var(--accent); position:relative}
-    .badge{display:inline-block; margin-left:12px; padding:6px 16px; border-radius:999px; background:linear-gradient(135deg,#ffd700,#ffb300); color:#1a1a1a; font-weight:800; box-shadow:0 0 28px rgba(255,215,0,.55)}
-    .beam{
-      position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none;
-      box-shadow: 0 0 60px 20px rgba(0,246,255,.12);
-      transform: translate(-50%,-50%);
-      animation: beam 4.5s ease-in-out infinite;
-    }
-    @keyframes beam { 0%{opacity:.4} 50%{opacity:.9} 100%{opacity:.4} }
-    .sub{max-width:980px; margin:18px auto 0; color:var(--muted)}
-    
-    .slogan { font-size:22px; font-weight:700; margin-top:18px; color:var(--gold); display:none; }
 
+        .brand{
+          display:inline-flex;
+          align-items:center;
+          gap:18px;
+          position:relative;
+          margin-bottom: 24px;
+        }
 
-    main{max-width:1150px; margin:0 auto; padding:28px 24px 96px}
-    /* 沿用使用者提供的更緊湊的數值 */
-    h2{margin:15px 0 10px; font-size:24px; color:var(--accent); border-left:5px solid var(--accent); padding-left:10px}
-    h3{margin:12px 0 8px; font-size:18px; color:var(--accent2)}
-    .glass{position:relative; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px; box-shadow:0 12px 40px rgba(0,0,0,.45); backdrop-filter: var(--glass)}
-    .grid{display:grid; gap:18px; grid-template-columns: repeat(auto-fit,minmax(260px,1fr))}
-    ul{margin:0; padding-left:18px}
-    li{margin:8px 0}
-    
-    /* === 接入流程 (Flow) 區塊 (保持原始樣式) === */
-    .flow{
-                display:grid; /* 1. 改為 Grid 佈局 */
-                gap:10px;
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-                
-                /* 【核心修正】新增左右內邊距，使步驟圓框內縮 */
-                padding: 0 16px;
-    }
-    
-        /* 文件中約 161 行開始的 .step 區塊 */
+        .title{font-size:52px; font-weight:900; letter-spacing:.7px; color:var(--accent); position:relative}
+        .badge{display:inline-block; margin-left:12px; padding:6px 16px; border-radius:999px; background:linear-gradient(135deg,#ffd700,#ffb300); color:#1a1a1a; font-weight:800; box-shadow:0 0 28px rgba(255,215,0,.55)}
+        .beam{
+          position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none;
+          box-shadow: 0 0 60px 20px rgba(0,246,255,.12);
+          transform: translate(-50%,-50%);
+          animation: beam 4.5s ease-in-out infinite;
+        }
+        @keyframes beam { 0%{opacity:.4} 50%{opacity:.9} 100%{opacity:.4} }
+        .sub{max-width:980px; margin:18px auto 0; color:var(--muted)}
+
+        .slogan { font-size:22px; font-weight:700; margin-top:18px; color:var(--gold); display:none; }
+
+        main{max-width:1150px; margin:0 auto; padding:28px 24px 96px}
+        h2{margin:15px 0 10px; font-size:24px; color:var(--accent); border-left:5px solid var(--accent); padding-left:10px}
+        h3{margin:12px 0 8px; font-size:18px; color:var(--accent2)}
+        .glass{position:relative; background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px; box-shadow:0 12px 40px rgba(0,0,0,.45); backdrop-filter: var(--glass)}
+        .grid{display:grid; gap:18px; grid-template-columns: repeat(auto-fit,minmax(260px,1fr))}
+        ul{margin:0; padding-left:18px}
+        li{margin:8px 0}
+
+        .flow{
+            display:grid;
+            gap:10px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            padding: 0 16px;
+        }
+
         .step{
-          background:rgba(0,246,255,0.12); 
-          border:1px solid rgba(0,246,255,0.35); 
-          padding:10px 14px; 
-          border-radius:999px; 
+          background:rgba(0,246,255,0.12);
+          border:1px solid rgba(0,246,255,0.35);
+          padding:10px 14px;
+          border-radius:999px;
           font-size:14px;
-          
-          /* 【核心修正】強制文字不換行 */ 
           white-space: nowrap;
-          
-          /* 3. 確保文字在等寬的步驟框中居中 */
           text-align: center;
         }
-        
-    /* === 接入流程 (Flow) 區塊 結束 === */
 
-    .packages{display:grid; gap:18px; grid-template-columns: 1fr;}
-    .package{position:relative; background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border:1px solid var(--border); border-radius:18px; padding:20px; text-align:center; transition:transform .25s, box-shadow .25s}
-    .package::after{content:""; position:absolute; inset:0; border-radius:18px; opacity:.45; background: radial-gradient(80% 60% at 50% 0%, rgba(0,246,255,.12), transparent 70%)}
-    .package:hover{transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.5)}
-    .package h3{color:var(--gold); margin:6px 0 12px}
-    .kv{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px}
-    .kv div{background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:10px; border-radius:10px}
-    .cta{margin-top:14px}
-    .cta a{display:inline-block; padding:12px 18px; border-radius:12px; border:1px solid rgba(0,246,255,.4); color:#fff; text-decoration:none; background:linear-gradient(135deg, rgba(0,246,255,.18), rgba(0,246,255,.06)); transition:.25s}
-    .cta a:hover{transform:translateY(-2px); box-shadow:0 12px 26px rgba(0,246,255,.3)}
+        .packages{display:grid; gap:18px; grid-template-columns: 1fr;}
+        .package{position:relative; background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border:1px solid var(--border); border-radius:18px; padding:20px; text-align:center; transition:transform .25s, box-shadow .25s}
+        .package::after{content:""; position:absolute; inset:0; border-radius:18px; opacity:.45; background: radial-gradient(80% 60% at 50% 0%, rgba(0,246,255,.12), transparent 70%)}
+        .package:hover{transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,.5)}
+        .package h3{color:var(--gold); margin:6px 0 12px}
+        .kv{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px}
+        .kv div{background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:10px; border-radius:10px}
+        .cta{margin-top:14px}
+        .cta a{display:inline-block; padding:12px 18px; border-radius:12px; border:1px solid rgba(0,246,255,.4); color:#fff; text-decoration:none; background:linear-gradient(135deg, rgba(0,246,255,.18), rgba(0,246,255,.06)); transition:.25s}
+        .cta a:hover{transform:translateY(-2px); box-shadow:0 12px 26px rgba(0,246,255,.3)}
 
-    /* FAQ (保持原始樣式) */
-    details{background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin:10px 0}
-    details summary{cursor:pointer; font-weight:700; color:#dbe8ee}
-    details[open]{background:rgba(255,255,255,0.08)}
-    footer{margin-top:28px; text-align:center; color:#a5b1bd; padding:26px 12px; border-top:1px solid var(--border)}
-    
-    .plan-table {
-      width: 100%;
-      border-collapse: collapse;
-      color: var(--text);
-      margin-top: 18px;
-    }
-    .plan-table th, .plan-table td {
-      border: 1px solid var(--border);
-      padding: 10px;
-      text-align: center;
-    }
-    .plan-table th {
-      background: rgba(0,246,255,0.12);
-      color: var(--accent);
-    }
-    .plan-table tr:hover {
-      background: rgba(255,255,255,0.05);
-    }
-    
-    /* === 媒體查詢：手機模式樣式 (漢堡選單) === */
-    @media (max-width: 768px) {
-      
-      /* 讓所有區塊內容的對齊基準一致 */
-      .glass {
-          padding: 22px 0; /* 只保留上下 padding */
-      }
+        details{background:rgba(255,255,255,0.06); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin:10px 0}
+        details summary{cursor:pointer; font-weight:700; color:#dbe8ee}
+        details[open]{background:rgba(255,255,255,0.08)}
+        footer{margin-top:28px; text-align:center; color:#a5b1bd; padding:26px 12px; border-top:1px solid var(--border)}
 
-      /* 導覽列連結：在手機模式下預設隱藏，並改為垂直排列 */
-      .nav-links {
-          display: none; 
-          flex-direction: column;
-          position: absolute;
-          top: 100%; /* 定位在導覽列下方 */
-          left: 0;
+        .plan-table {
           width: 100%;
-          background: var(--nav); 
-          border-top: 1px solid var(--border);
-          padding: 10px 0;
-          margin-left: 0;
-          gap: 0;
-      }
-      
-      /* 導覽列連結：選單開啟時顯示 */
-      .nav-links.open {
-          display: flex; 
-      }
-
-      /* 導覽列連結項目樣式 */
-      .nav-links a {
-          padding: 12px 24px; /* 增加左右 padding */
-          width: 100%;
-          text-align: left;
-          border-radius: 0;
-      }
-      
-      /* 漢堡選單按鈕：在手機模式下顯示 */
-      .menu-toggle {
-          display: block; 
-      }
-      
-      /* === 接入流程 (Flow) 區塊 (保持原始手機樣式) === */
-      .flow {
-          display: grid; 
-          grid-template-columns: 1fr 1fr; 
-          gap: 10px; 
-                  
-                  padding: 0 16px;
-      }
-      
-      .step {
+          border-collapse: collapse;
+          color: var(--text);
+          margin-top: 18px;
+        }
+        .plan-table th, .plan-table td {
+          border: 1px solid var(--border);
+          padding: 10px;
           text-align: center;
-          display: block; 
-          width: 100%;
-                /* 新增：將左右 padding 移到 .step 內部 */
-                        padding: 14px 0; 
-                        /* 讓它在 24px 處對齊 */
-                        margin: 0 0;
-      }
-      /* === 接入流程 (Flow) 區塊 結束 === */
+        }
+        .plan-table th {
+          background: rgba(0,246,255,0.12);
+          color: var(--accent);
+        }
+        .plan-table tr:hover {
+          background: rgba(255,255,255,0.05);
+        }
 
-                #service-intro .glass p {
-                        padding: 0 24px; 
-                }
-  
-      /* .grid 容器 (產品優勢) */
-      .grid {
-          padding: 0 24px;
-      }
-      
-      /* ... (保留其他現有手機樣式，例如 plan-table 相關) ... */
-      .plan-table,
-      .plan-table thead,
-      .plan-table tbody,
-      .plan-table th,
-      .plan-table td,
-      .plan-table tr {
-        display: block;
-        width: 100%;
-      }
-
-      .plan-table thead { display: none; }
-
-      .plan-table tr {
-        margin-bottom: 18px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: rgba(255,255,255,0.05);
-        padding: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      }
-
-      .plan-table td {
-        display: grid;
-        grid-template-columns: 120px 1fr;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 0;
-        border: none;
-        border-bottom: 1px solid var(--border);
-        text-align: right;
-      }
-      .plan-table td:last-child { border-bottom: none; }
-
-      .plan-table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        color: var(--accent);
-        text-align: left;
-        white-space: nowrap;
-      }
-
-      .plan-table td:first-child {
-        grid-template-columns: 1fr;
-        text-align: center;
-        border-bottom: 1px solid var(--border);
-        padding: 10px 0 12px;
-        margin-bottom: 6px;
-        color: var(--gold);
-        font-size: 18px;
-        font-weight: 800;
-      }
-      .plan-table td:first-child::before { content: ""; }
-
-      .plan-table tr:nth-child(4) td[colspan] {
-        display: block;
-        text-align: center;
-        font-size: 16px;
-        font-weight: 400;
-        color: var(--text);
-        border-bottom: none;
-        margin: 8px 0;
-      }
-    }    
-</style>
+        @media (max-width: 768px) {
+          .glass { padding: 22px 0; }
+          .nav-links {
+              display: none;
+              flex-direction: column;
+              position: absolute;
+              top: 100%;
+              left: 0;
+              width: 100%;
+              background: var(--nav);
+              border-top: 1px solid var(--border);
+              padding: 10px 0;
+              margin-left: 0;
+              gap: 0;
+          }
+          .nav-links.open { display: flex; }
+          .nav-links a {
+              padding: 12px 24px;
+              width: 100%;
+              text-align: left;
+              border-radius: 0;
+          }
+          .menu-toggle { display: block; }
+          .flow {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+              padding: 0 16px;
+          }
+          .step {
+              text-align: center;
+              display: block;
+              width: 100%;
+              padding: 14px 0;
+              margin: 0 0;
+          }
+          #service-intro .glass p { padding: 0 24px; }
+          .grid { padding: 0 24px; }
+          .plan-table, .plan-table thead, .plan-table tbody, .plan-table th, .plan-table td, .plan-table tr {
+            display: block;
+            width: 100%;
+          }
+          .plan-table thead { display: none; }
+          .plan-table tr {
+            margin-bottom: 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          }
+          .plan-table td {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+          }
+          .plan-table td:last-child { border-bottom: none; }
+          .plan-table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: var(--accent);
+            text-align: left;
+            white-space: nowrap;
+          }
+          .plan-table td:first-child {
+            grid-template-columns: 1fr;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0 12px;
+            margin-bottom: 6px;
+            color: var(--gold);
+            font-size: 18px;
+            font-weight: 800;
+          }
+          .plan-table td:first-child::before { content: ""; }
+          .plan-table tr:nth-child(4) td[colspan] {
+            display: block;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text);
+            border-bottom: none;
+            margin: 8px 0;
+          }
+        }
+    </style>
 </head>
 
 <body>
@@ -404,10 +330,10 @@
               cursor: pointer;
               padding: 8px 12px;
               border-radius: 8px;
-              /* 繼承導覽列的字體和顏色 */
               font-family: inherit;
               font-size: inherit;
-           ">登出</button>
+           ">登出
+                </button>
             </div>
 
         </div>
@@ -454,8 +380,9 @@
         font-size: 24px;
         cursor: pointer;
         line-height: 1;
-    ">&times;</button>
-    
+    ">&times;
+    </button>
+
     <div id="auth-tabs" style="display: flex; margin-bottom: 25px; border-bottom: 1px solid var(--border);">
         <button id="tab-login" onclick="switchAuthTab('login')" style="
             flex: 1;
@@ -467,7 +394,8 @@
             font-weight: 600;
             cursor: pointer;
             border-bottom: 2px solid var(--gold);
-        ">登入</button>
+        ">登入
+        </button>
         <button id="tab-register" onclick="switchAuthTab('register')" style="
             flex: 1;
             padding: 12px;
@@ -478,674 +406,733 @@
             font-weight: 600;
             cursor: pointer;
             border-bottom: 2px solid transparent;
-        ">註冊</button>
+        ">註冊
+        </button>
     </div>
 
     <div id="login-form">
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">帳號</label>
-            <input type="text" id="login-username" placeholder="請輸入帳號" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">帳號或
+                Email</label>
+            <input type="text" id="login-identifier" name="identifier" placeholder="請輸入帳號或 Email"
+                   style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
         </div>
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">密碼</label>
             <div style="position: relative;">
-                <input type="password" id="login-password" placeholder="請輸入密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
-                <button type="button" onclick="togglePassword('login-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                <input type="password" id="login-password" name="password" placeholder="請輸入密碼"
+                       style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                <button type="button" onclick="togglePasswordVisibility('login-password', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">
+                    👁
+                </button>
             </div>
         </div>
         <div style="text-align: right; margin-bottom: 20px;">
-            <a href="#" onclick="showForgotPasswordForm(); return false;" style="color: var(--accent); text-decoration: none; font-size: 13px;">忘記密碼？</a>
+            <a href="#" onclick="showForgotPasswordForm(); return false;"
+               style="color: var(--accent); text-decoration: none; font-size: 13px;">忘記密碼？</a>
         </div>
-        <button onclick="loginUser()" style="width: 100%; padding: 14px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;">登入</button>
+        <button onclick="loginUser()"
+                style="width: 100%; padding: 14px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;">
+            登入
+        </button>
     </div>
 
     <div id="register-form" style="display: none;">
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">帳號</label>
-            <input type="text" id="register-username" placeholder="請輸入帳號 (至少4個字元)" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <input type="text" id="register-username" name="username" placeholder="請輸入帳號 (至少4個字元)"
+                   style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
         </div>
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">電子郵件</label>
-            <input type="email" id="register-email" placeholder="請輸入 Email" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <input type="email" id="register-email" name="email" placeholder="請輸入 Email"
+                   style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
         </div>
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">密碼</label>
             <div style="position: relative;">
-                <input type="password" id="register-password" placeholder="請輸入密碼 (至少6個字元)" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
-                <button type="button" onclick="togglePassword('register-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                <input type="password" id="register-password" name="password" placeholder="請輸入密碼 (至少8個字元，含大小寫英數)"
+                       style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                <button type="button" onclick="togglePasswordVisibility('register-password', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">
+                    👁
+                </button>
             </div>
+            <div id="register-strength-meter"></div>
         </div>
         <div style="margin-bottom: 20px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">確認密碼</label>
             <div style="position: relative;">
-                <input type="password" id="register-password-confirm" placeholder="請再次輸入密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
-                <button type="button" onclick="togglePassword('register-password-confirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                <input type="password" id="register-password-confirm" placeholder="請再次輸入密碼"
+                       style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                <button type="button" onclick="togglePasswordVisibility('register-password-confirm', this)"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">
+                    👁
+                </button>
             </div>
         </div>
-        <button onclick="registerUser()" style="width: 100%; padding: 14px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;">註冊</button>
+        <button onclick="registerUser()"
+                style="width: 100%; padding: 14px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px;">
+            註冊
+        </button>
     </div>
 
     <div id="forgot-password-form" style="display: none;">
         <h3 style="color: var(--accent); margin-bottom: 20px; text-align: center;">忘記密碼</h3>
-        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px; text-align: center;">請輸入您註冊時使用的電子郵件，我們會寄送密碼重置連結給您。</p>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px; text-align: center;">
+            請輸入您註冊時使用的電子郵件，我們會寄送密碼重置連結給您。</p>
         <div style="margin-bottom: 20px;">
             <label style="display: block; margin-bottom: 5px; color: var(--muted); font-size: 14px;">電子郵件</label>
-            <input type="email" id="forgot-email" placeholder="請輸入您的 Email" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+            <input type="email" id="forgot-email" name="email" placeholder="請輸入您的 Email"
+                   style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
         </div>
-        <button onclick="forgotPassword()" style="width: 100%; padding: 14px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px;">發送重置連結</button>
+        <button onclick="forgotPassword()"
+                style="width: 100%; padding: 14px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px;">
+            發送重置連結
+        </button>
         <div style="text-align: center;">
-            <a href="#" onclick="switchAuthTab('login'); return false;" style="color: var(--muted); text-decoration: none; font-size: 13px;">返回登入</a>
+            <a href="#" onclick="switchAuthTab('login'); return false;"
+               style="color: var(--muted); text-decoration: none; font-size: 13px;">返回登入</a>
         </div>
     </div>
 
-    <div id="message-box" style="margin-top: 20px; padding: 12px; border-radius: 8px; text-align: center; font-size: 14px; display: none;"></div>
+    <div id="message-box"
+         style="margin-top: 20px; padding: 12px; border-radius: 8px; text-align: center; font-size: 14px; display: none;"></div>
 </div>
 
 <header id="home">
     <div class="stars" aria-hidden="true">
-      <span style="left:12%;top:18%;animation-delay:.2s"></span>
-      <span style="left:28%;top:42%;animation-delay:.9s"></span>
-      <span style="left:63%;top:22%;animation-delay:1.6s"></span>
-      <span style="left:78%;top:36%;animation-delay:.4s"></span>
-      <span style="left:88%;top:14%;animation-delay:1.2s"></span>
-      <span style="left:44%;top:9%;animation-delay:.7s"></span>
+        <span style="left:12%;top:18%;animation-delay:.2s"></span>
+        <span style="left:28%;top:42%;animation-delay:.9s"></span>
+        <span style="left:63%;top:22%;animation-delay:1.6s"></span>
+        <span style="left:78%;top:36%;animation-delay:.4s"></span>
+        <span style="left:88%;top:14%;animation-delay:1.2s"></span>
+        <span style="left:44%;top:9%;animation-delay:.7s"></span>
     </div>
-    
+
     <div class="logo-container">
-        <img id="header-logo" src="logo.png" alt="布卡盾 Logo"> 
+        <img id="header-logo" src="logo.png" alt="布卡盾 Logo">
     </div>
 
     <p class="slogan" id="slogan-tech">專為遊戲伺服器打造的雲端防護</p>
-  <p class="slogan" id="slogan-biz">伺服器穩定營運，攻擊無所遁形</p>
-  <p class="slogan" id="slogan-cost">降低維護成本，提升伺服器安全</p>
+    <p class="slogan" id="slogan-biz">伺服器穩定營運，攻擊無所遁形</p>
+    <p class="slogan" id="slogan-cost">降低維護成本，提升伺服器安全</p>
 
 </header>
 
 <main>
     <section id="service-intro">
-      <h2>產品介紹</h2>
-      <div class="glass">
-          <p>
-              布卡盾專為【台灣遊戲伺服器】市場設計，提供分散式防禦、隱藏 IP、全程加密保障資料安全，並透過精準流量識別降低誤封風險。<br><br>
-              為【電腦與手機線上遊戲】量身設計，能抵禦各類網路攻擊，搭配台灣獨家線路節點快速切換，使用者幾乎無感，全面滿足高安全性需求。
-          </p>
-      </div>
+        <h2>產品介紹</h2>
+        <div class="glass">
+            <p>
+                布卡盾專為【台灣遊戲伺服器】市場設計，提供分散式防禦、隱藏 IP、全程加密保障資料安全，並透過精準流量識別降低誤封風險。<br><br>
+                為【電腦與手機線上遊戲】量身設計，能抵禦各類網路攻擊，搭配台灣獨家線路節點快速切換，使用者幾乎無感，全面滿足高安全性需求。
+            </p>
+        </div>
     </section>
 
     <section id="scenes">
-      <h2>使用場景</h2>
-      <div class="glass grid">
-        <div>
-          <h3>整合方式</h3>
-          <p>遊戲程式與 App 的通訊、儲值、更新等功能，<br>皆可納入防禦系統，提供穩定安全的體驗。<br> </p>
+        <h2>使用場景</h2>
+        <div class="glass grid">
+            <div>
+                <h3>整合方式</h3>
+                <p>遊戲程式與 App 的通訊、儲值、更新等功能，<br>皆可納入防禦系統，提供穩定安全的體驗。<br></p>
+            </div>
+            <div>
+                <h3>全球節點</h3>
+                <p>提供高可用性，平均可達 99.9% 以上，<br>有效改善國際出口路由不穩定與高延遲等問題。</p>
+            </div>
         </div>
-        <div>
-          <h3>全球節點</h3>
-          <p>提供高可用性，平均可達 99.9% 以上，<br>有效改善國際出口路由不穩定與高延遲等問題。</p>
-        </div>
-      </div>
     </section>
 
-  <section id="features">
-    <h2>產品優勢</h2>
-    <div class="glass grid">
-      <div>
-        <h3><span class="icon">🆓</span> 免費測試</h3>
-        <p>降低安全成本，確保買到真正可靠的產品。</p>
-      </div>
-      <div>
-        <h3><span class="icon">🛡️</span> 防禦功能</h3>
-        <p>DDoS 防禦支援大流量攻擊；CC 防護精準阻擋，誤封率極低。</p>
-      </div>
-      
-      <div>
-        <h3><span class="icon">⚡</span> 加速功能</h3>
-        <p>智慧監測（透過 SDK 提供），依即時網路狀況自動選擇最佳路線。</p>
-      </div>
-      
-      <div>
-        <h3><span class="icon">📊</span> 行為分析</h3>
-        <p>記錄訪問行為，有效阻斷惡意掃描與暴力破解。</p>
-      </div>
-      <div>
-        <h3><span class="icon">🔒</span> 資訊安全</h3>
-        <p>隱藏源伺服器，只允許【布卡盾】節點通訊。</p>
-      </div>
-      <div>
-        <h3><span class="icon">⚙️</span> 簡單運維</h3>
-        <p>一次接入即可永久受益，維護僅需原始伺服器。</p>
-      </div>
-      <div>
-        <h3><span class="icon">📡</span> 負載均衡</h3>
-        <p>支援多伺服器負載，提供權重設定與故障偵測。</p>
-      </div>
-      <div>
-        <h3><span class="icon">🚀</span> 智能加速</h3>
-        <p>自動識別最快節點，一次接入即可長期受益。</p>
-      </div>
-      <div>
-        <h3><span class="icon">🔄</span> 無感切換</h3>
-        <p>節點即時同步，切換無縫進行，使用者無感。</p>
-      </div>
-      <div>
-        <h3><span class="icon">💻</span> 應用支持</h3>
-        <p>支援 Windows、iOS、Android 等多種客戶端。</p>
-      </div>
-      <div>
-        <h3><span class="icon">📶</span> 頻寬等級優勢</h3>
-        <p>高峰期提供彈性擴充，不額外收費，確保不中斷。</p>
-      </div>
-    </div>
-  </section>
+    <section id="features">
+        <h2>產品優勢</h2>
+        <div class="glass grid">
+            <div>
+                <h3><span class="icon">🆓</span> 免費測試</h3>
+                <p>降低安全成本，確保買到真正可靠的產品。</p>
+            </div>
+            <div>
+                <h3><span class="icon">🛡️</span> 防禦功能</h3>
+                <p>DDoS 防禦支援大流量攻擊；CC 防護精準阻擋，誤封率極低。</p>
+            </div>
+
+            <div>
+                <h3><span class="icon">⚡</span> 加速功能</h3>
+                <p>智慧監測（透過 SDK 提供），依即時網路狀況自動選擇最佳路線。</p>
+            </div>
+
+            <div>
+                <h3><span class="icon">📊</span> 行為分析</h3>
+                <p>記錄訪問行為，有效阻斷惡意掃描與暴力破解。</p>
+            </div>
+            <div>
+                <h3><span class="icon">🔒</span> 資訊安全</h3>
+                <p>隱藏源伺服器，只允許【布卡盾】節點通訊。</p>
+            </div>
+            <div>
+                <h3><span class="icon">⚙️</span> 簡單運維</h3>
+                <p>一次接入即可永久受益，維護僅需原始伺服器。</p>
+            </div>
+            <div>
+                <h3><span class="icon">📡</span> 負載均衡</h3>
+                <p>支援多伺服器負載，提供權重設定與故障偵測。</p>
+            </div>
+            <div>
+                <h3><span class="icon">🚀</span> 智能加速</h3>
+                <p>自動識別最快節點，一次接入即可長期受益。</p>
+            </div>
+            <div>
+                <h3><span class="icon">🔄</span> 無感切換</h3>
+                <p>節點即時同步，切換無縫進行，使用者無感。</p>
+            </div>
+            <div>
+                <h3><span class="icon">💻</span> 應用支持</h3>
+                <p>支援 Windows、iOS、Android 等多種客戶端。</p>
+            </div>
+            <div>
+                <h3><span class="icon">📶</span> 頻寬等級優勢</h3>
+                <p>高峰期提供彈性擴充，不額外收費，確保不中斷。</p>
+            </div>
+        </div>
+    </section>
 
     <section id="flow">
-      <h2>接入流程</h2>
-      <div class="glass flow">
-        <span class="step">聯絡客服</span>
-        <span class="step">購買【布卡盾】</span>
-        <span class="step">接入 SDK</span>
-        <span class="step">轉發規則</span>
-        <span class="step">客戶端 IP 配置</span>
-        <span class="step">完成接入</span>
-      </div>
+        <h2>接入流程</h2>
+        <div class="glass flow">
+            <span class="step">聯絡客服</span>
+            <span class="step">購買【布卡盾】</span>
+            <span class="step">接入 SDK</span>
+            <span class="step">轉發規則</span>
+            <span class="step">客戶端 IP 配置</span>
+            <span class="step">完成接入</span>
+        </div>
     </section>
 
-<section id="plans">
-  <h2>產品套餐</h2>
-  <div class="glass">
-    <table class="plan-table">
-      <thead>
-        <tr>
-          <th>方案</th>
-          <th>最大連線數</th>
-          <th>DDoS 防護</th>
-          <th>頻寬等級</th>
-          <th>加速</th>
-          <th>免費測試</th>
-          <th>價格</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td data-label="方案">基礎版</td>
-          <td data-label="最大連線數">400</td>
-          <td data-label="DDoS 防護">無限</td>
-          <td data-label="頻寬等級">標準</td>
-          <td data-label="加速">台灣專線 / 國際節點加速</td>
-          <td data-label="免費測試">7天</td>
-          <td data-label="價格">NT$25,000</td>
-        </tr>
-        <tr>
-          <td data-label="方案">高級版</td>
-          <td data-label="最大連線數">800</td>
-          <td data-label="DDoS 防護">無限</td>
-          <td data-label="頻寬等級">進階</td>
-          <td data-label="加速">台灣專線 / 國際節點加速</td>
-          <td data-label="免費測試">7天</td>
-          <td data-label="價格">NT$43,000</td>
-        </tr>
-        <tr>
-          <td data-label="方案">商務版</td>
-          <td data-label="最大連線數">1200</td>
-          <td data-label="DDoS 防護">無限</td>
-          <td data-label="頻寬等級">企業級</td>
-          <td data-label="加速">台灣專線 / 國際節點加速</td>
-          <td data-label="免費測試">7天</td>
-          <td data-label="價格">NT$61,000</td>
-        </tr>
-        <tr>
-          <td data-label="方案">專業版</td>
-          <td colspan="6">聯絡客服</td>
-        </tr>
-        <tr>
-          <td data-label="方案">頻寬等級擴充</td>
-          <td data-label="最大連線數">-</td>
-          <td data-label="DDoS 防護">-</td>
-          <td data-label="頻寬等級">1Mbps</td>
-          <td data-label="加速">台灣專線 / 國際節點加速</td>
-          <td data-label="免費測試">1個月</td>
-          <td data-label="價格">NT$320</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="cta">
-    <a href="#contact">申請測試</a>
-    <a href="#buy">立即購買</a>
-    <a href="#support">聯絡客服</a>
-  </div>
-</section>
+    <section id="plans">
+        <h2>產品套餐</h2>
+        <div class="glass">
+            <table class="plan-table">
+                <thead>
+                <tr>
+                    <th>方案</th>
+                    <th>最大連線數</th>
+                    <th>DDoS 防護</th>
+                    <th>頻寬等級</th>
+                    <th>加速</th>
+                    <th>免費測試</th>
+                    <th>價格</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td data-label="方案">基礎版</td>
+                    <td data-label="最大連線數">400</td>
+                    <td data-label="DDoS 防護">無限</td>
+                    <td data-label="頻寬等級">標準</td>
+                    <td data-label="加速">台灣專線 / 國際節點加速</td>
+                    <td data-label="免費測試">7天</td>
+                    <td data-label="價格">NT$25,000</td>
+                </tr>
+                <tr>
+                    <td data-label="方案">高級版</td>
+                    <td data-label="最大連線數">800</td>
+                    <td data-label="DDoS 防護">無限</td>
+                    <td data-label="頻寬等級">進階</td>
+                    <td data-label="加速">台灣專線 / 國際節點加速</td>
+                    <td data-label="免費測試">7天</td>
+                    <td data-label="價格">NT$43,000</td>
+                </tr>
+                <tr>
+                    <td data-label="方案">商務版</td>
+                    <td data-label="最大連線數">1200</td>
+                    <td data-label="DDoS 防護">無限</td>
+                    <td data-label="頻寬等級">企業級</td>
+                    <td data-label="加速">台灣專線 / 國際節點加速</td>
+                    <td data-label="免費測試">7天</td>
+                    <td data-label="價格">NT$61,000</td>
+                </tr>
+                <tr>
+                    <td data-label="方案">專業版</td>
+                    <td colspan="6">聯絡客服</td>
+                </tr>
+                <tr>
+                    <td data-label="方案">頻寬等級擴充</td>
+                    <td data-label="最大連線數">-</td>
+                    <td data-label="DDoS 防護">-</td>
+                    <td data-label="頻寬等級">1Mbps</td>
+                    <td data-label="加速">台灣專線 / 國際節點加速</td>
+                    <td data-label="免費測試">1個月</td>
+                    <td data-label="價格">NT$320</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="cta">
+            <a href="#contact">申請測試</a>
+            <a href="#buy">立即購買</a>
+            <a href="#support">聯絡客服</a>
+        </div>
+    </section>
 
 
-<section id="faq">
-      <h2>常見問題</h2>
-      <div class="glass">
-        <details>
-          <summary>是否需要修改原有伺服器設定才能接入？</summary>
-          <p>接入開發套件（SDK）後，只需設定轉發規則與客戶端 IP，原有伺服器可維持既有服務，無需大幅更動。</p>
-        </details>
-        <details>
-          <summary>CC防護精準阻擋如何達成？</summary>
-          <p>透過行為分析與特徵比對，能有效區分正常訪客與惡意流量，避免誤封，確保服務穩定。</p>
-        </details>
-        <details>
-          <summary>全球節點如何選線？</summary>
-          <p>系統具備動態監測機制，依即時網路狀況自動優化通訊路線，並可快速切換，確保連線穩定。</p>
-        </details>
-      </div>
+    <section id="faq">
+        <h2>常見問題</h2>
+        <div class="glass">
+            <details>
+                <summary>是否需要修改原有伺服器設定才能接入？</summary>
+                <p>接入開發套件（SDK）後，只需設定轉發規則與客戶端 IP，原有伺服器可維持既有服務，無需大幅更動。</p>
+            </details>
+            <details>
+                <summary>CC防護精準阻擋如何達成？</summary>
+                <p>透過行為分析與特徵比對，能有效區分正常訪客與惡意流量，避免誤封，確保服務穩定。</p>
+            </details>
+            <details>
+                <summary>全球節點如何選線？</summary>
+                <p>系統具備動態監測機制，依即時網路狀況自動優化通訊路線，並可快速切換，確保連線穩定。</p>
+            </details>
+        </div>
     </section>
 
     <footer>© 2025 布卡盾官方網站 | 安心雲防系統</footer>
-  </main>
-  
-        <script>
-        // =======================================================
-                // 🚨 請從這裡開始貼上 JWT 認證相關的所有 JavaScript 函式 🚨
-                // =======================================================
-                
+</main>
+
+<script>
+    // =======================================================
+            // 🚨 請從這裡開始貼上 JWT 認證相關的所有 JavaScript 函式 🚨
+            // =======================================================
+
 // ----------------------------------------------------------------------
-                // 🎯 核心變數設定 (不變)
-                // ----------------------------------------------------------------------
-                const API_BASE_URL = window.API_BASE_URL || '';
-                let CURRENT_JWT_TOKEN = null; // 儲存登入成功的 JWT Token
-                let currentAuthMode = ''; // 'register' 或 'login'
+            // 🎯 核心變數設定 (不變)
+            // ----------------------------------------------------------------------
+            const API_BASE_URL = window.API_BASE_URL || '';
+            let CURRENT_JWT_TOKEN = null; // 儲存登入成功的 JWT Token
+            let currentAuthMode = ''; // 'register' 或 'login'
 
-                // ----------------------------------------------------------------------
-                // 💡 輔助函式：顯示訊息
-                // ----------------------------------------------------------------------
-                function displayMessage(msg, isSuccess = true) {
-                        const box = document.getElementById('message-box');
-                        if (!box) return; 
-                        box.textContent = msg;
-                        box.style.display = 'block';
-                        box.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)'; 
-                        box.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
-                        box.style.border = isSuccess ? '1px solid rgba(0, 201, 212, 0.3)' : '1px solid rgba(255, 80, 80, 0.3)';
-                }
+            // ----------------------------------------------------------------------
+            // 💡 輔助函式：顯示訊息
+            // ----------------------------------------------------------------------
+            function displayMessage(msg, isSuccess = true) {
+                    const box = document.getElementById('message-box');
+                    if (!box) return;
+                    box.textContent = msg;
+                    box.style.display = 'block';
+                    box.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
+                    box.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
+                    box.style.border = isSuccess ? '1px solid rgba(0, 201, 212, 0.3)' : '1px solid rgba(255, 80, 80, 0.3)';
+            }
 
-                // ----------------------------------------------------------------------
-                // 🎯 核心函式：狀態管理 (新增)
-                // ----------------------------------------------------------------------
-                function updateNavLinks(username = null) {
-                        const infoDisplay = document.getElementById('user-info-display');
-                        const registerBtn = document.getElementById('nav-register-btn');
-                        const loginBtn = document.getElementById('nav-login-btn');
-                        const usernameSpan = document.getElementById('nav-username');
+            // ----------------------------------------------------------------------
+            // 🎯 核心函式：狀態管理 (新增)
+            // ----------------------------------------------------------------------
+            function updateNavLinks(username = null) {
+                    const infoDisplay = document.getElementById('user-info-display');
+                    const registerBtn = document.getElementById('nav-register-btn');
+                    const loginBtn = document.getElementById('nav-login-btn');
+                    const usernameSpan = document.getElementById('nav-username');
 
-                        if (!infoDisplay || !registerBtn || !loginBtn || !usernameSpan) return;
+                    if (!infoDisplay || !registerBtn || !loginBtn || !usernameSpan) return;
 
-                        if (username) {
-                                // 狀態: 已登入
-                                registerBtn.style.display = 'none';
-                                loginBtn.style.display = 'none';
-                                
-                                usernameSpan.textContent = `嗨, ${username}`;
-                                infoDisplay.style.display = 'flex'; // 顯示用戶資訊
-                        } else {
-                                // 狀態: 未登入
-                                registerBtn.style.display = 'block'; 
-                                loginBtn.style.display = 'block'; 
-                                
-                                infoDisplay.style.display = 'none'; // 隱藏用戶資訊
-                        }
-                }
+                    if (username) {
+                            // 狀態: 已登入
+                            registerBtn.style.display = 'none';
+                            loginBtn.style.display = 'none';
 
-                // ----------------------------------------------------------------------
-                // 🎯 核心函式：登出用戶 (新增)
-                // ----------------------------------------------------------------------
-                function logoutUser() {
-                        // 清除全域變數和瀏覽器儲存
-                        CURRENT_JWT_TOKEN = null;
-                        localStorage.removeItem('jwtToken');
-                        localStorage.removeItem('username'); 
-                        
-                        // 清除訊息並關閉面板
-                        hideAuthPanel();
-                        const box = document.getElementById('message-box');
-                        if (box) box.textContent = ''; 
-                        
-                        // 更新導覽列為未登入狀態
-                        updateNavLinks(null);
-                        alert('已成功登出。');
-                }
+                            usernameSpan.textContent = `嗨, ${username}`;
+                            infoDisplay.style.display = 'flex'; // 顯示用戶資訊
+                    } else {
+                            // 狀態: 未登入
+                            registerBtn.style.display = 'block';
+                            loginBtn.style.display = 'block';
 
-                // ----------------------------------------------------------------------
-                // 💡 輔助函式：顯示/隱藏認證面板
-                // ----------------------------------------------------------------------
-                function showAuthPanel(mode) {
-                        currentAuthMode = mode;
-                        const authSection = document.getElementById('auth-section');
-                        const authOverlay = document.getElementById('auth-overlay');
-                        
-                        if (!authSection) return; 
+                            infoDisplay.style.display = 'none'; // 隱藏用戶資訊
+                    }
+            }
 
-                        authSection.style.display = 'block';
-                        if (authOverlay) authOverlay.style.display = 'block';
-                        hideMessage();
-                        switchAuthTab(mode);
-                }
+            // ----------------------------------------------------------------------
+            // 🎯 核心函式：登出用戶 (新增)
+            // ----------------------------------------------------------------------
+            function logoutUser() {
+                    // 清除全域變數和瀏覽器儲存
+                    CURRENT_JWT_TOKEN = null;
+                    localStorage.removeItem('jwtToken');
+                    localStorage.removeItem('username');
 
-                function hideAuthPanel() {
-                        const authSection = document.getElementById('auth-section');
-                        const authOverlay = document.getElementById('auth-overlay');
-                        if (authSection) authSection.style.display = 'none';
-                        if (authOverlay) authOverlay.style.display = 'none';
-                        hideMessage();
-                }
+                    // 清除訊息並關閉面板
+                    hideAuthPanel();
+                    const box = document.getElementById('message-box');
+                    if (box) box.textContent = '';
 
-                function togglePassword(inputId, btn) {
-                        const input = document.getElementById(inputId);
-                        if (input.type === 'password') {
-                                input.type = 'text';
-                                btn.textContent = '🙈';
-                        } else {
-                                input.type = 'password';
-                                btn.textContent = '👁';
-                        }
-                }
+                    // 更新導覽列為未登入狀態
+                    updateNavLinks(null);
+                    alert('已成功登出。');
+            }
 
-                function switchAuthTab(tab) {
-                        currentAuthMode = tab;
-                        const tabLogin = document.getElementById('tab-login');
-                        const tabRegister = document.getElementById('tab-register');
-                        const loginForm = document.getElementById('login-form');
-                        const registerForm = document.getElementById('register-form');
-                        const forgotForm = document.getElementById('forgot-password-form');
-                        const authTabs = document.getElementById('auth-tabs');
+            // ----------------------------------------------------------------------
+            // 💡 輔助函式：顯示/隱藏認證面板
+            // ----------------------------------------------------------------------
+            function showAuthPanel(mode) {
+                    currentAuthMode = mode;
+                    const authSection = document.getElementById('auth-section');
+                    const authOverlay = document.getElementById('auth-overlay');
 
-                        hideMessage();
+                    if (!authSection) return;
 
-                        if (tab === 'login') {
-                                tabLogin.style.color = 'var(--gold)';
-                                tabLogin.style.borderBottom = '2px solid var(--gold)';
-                                tabRegister.style.color = 'var(--muted)';
-                                tabRegister.style.borderBottom = '2px solid transparent';
-                                loginForm.style.display = 'block';
-                                registerForm.style.display = 'none';
-                                forgotForm.style.display = 'none';
-                                authTabs.style.display = 'flex';
-                        } else if (tab === 'register') {
-                                tabRegister.style.color = 'var(--gold)';
-                                tabRegister.style.borderBottom = '2px solid var(--gold)';
-                                tabLogin.style.color = 'var(--muted)';
-                                tabLogin.style.borderBottom = '2px solid transparent';
-                                registerForm.style.display = 'block';
-                                loginForm.style.display = 'none';
-                                forgotForm.style.display = 'none';
-                                authTabs.style.display = 'flex';
-                        }
-                }
+                    authSection.style.display = 'block';
+                    if (authOverlay) authOverlay.style.display = 'block';
+                    hideMessage();
+                    switchAuthTab(mode);
+            }
 
-                function showForgotPasswordForm() {
-                        const loginForm = document.getElementById('login-form');
-                        const registerForm = document.getElementById('register-form');
-                        const forgotForm = document.getElementById('forgot-password-form');
-                        const authTabs = document.getElementById('auth-tabs');
+            function hideAuthPanel() {
+                    const authSection = document.getElementById('auth-section');
+                    const authOverlay = document.getElementById('auth-overlay');
+                    if (authSection) authSection.style.display = 'none';
+                    if (authOverlay) authOverlay.style.display = 'none';
+                    hideMessage();
+            }
 
-                        hideMessage();
-                        loginForm.style.display = 'none';
-                        registerForm.style.display = 'none';
-                        forgotForm.style.display = 'block';
-                        authTabs.style.display = 'none';
-                }
+            function switchAuthTab(tab) {
+                    currentAuthMode = tab;
+                    const tabLogin = document.getElementById('tab-login');
+                    const tabRegister = document.getElementById('tab-register');
+                    const loginForm = document.getElementById('login-form');
+                    const registerForm = document.getElementById('register-form');
+                    const forgotForm = document.getElementById('forgot-password-form');
+                    const authTabs = document.getElementById('auth-tabs');
 
-                function hideMessage() {
-                        const box = document.getElementById('message-box');
-                        if (box) {
-                                box.style.display = 'none';
-                                box.textContent = '';
-                        }
-                }
-                
-                // ----------------------------------------------------------------------
-                // 🎯 輔助函式：將 API 錯誤轉換成友好的中文訊息
-                // ----------------------------------------------------------------------
-                function getRegisterErrorMessage(errorText, statusCode) {
-                        const lowerText = errorText.toLowerCase();
-                        
-                        if (lowerText.includes('already exists') || lowerText.includes('duplicate') || 
-                            lowerText.includes('username') && lowerText.includes('exist') ||
-                            statusCode === 409) {
-                                return '此帳號已有人使用，請改用其他帳號。';
-                        }
-                        if (lowerText.includes('password') && (lowerText.includes('weak') || lowerText.includes('short') || lowerText.includes('length'))) {
-                                return '密碼強度不足，請使用至少 6 個字元，並包含數字和字母。';
-                        }
-                        if (lowerText.includes('validation') || lowerText.includes('invalid')) {
-                                return '輸入格式不正確，請檢查用戶名和密碼。';
-                        }
-                        if (lowerText.includes('username') && lowerText.includes('required')) {
-                                return '請輸入用戶名。';
-                        }
-                        if (lowerText.includes('password') && lowerText.includes('required')) {
-                                return '請輸入密碼。';
-                        }
-                        if (statusCode === 400) {
-                                return '輸入資料有誤，請檢查用戶名和密碼格式。';
-                        }
-                        if (statusCode === 500) {
-                                return '系統忙碌中，請稍後再試。';
-                        }
-                        return '註冊失敗，請稍後再試或聯繫客服。';
-                }
+                    hideMessage();
+                    // 切換 Tab 時清除錯誤
+                    window.clearFormErrors('login-form');
+                    window.clearFormErrors('register-form');
+                    window.clearFormErrors('forgot-password-form');
 
-                // ----------------------------------------------------------------------
-                // 🎯 函式 1: 註冊用戶 (Register)
-                // ----------------------------------------------------------------------
-                async function registerUser() {
-                        const username = document.getElementById('register-username').value.trim();
-                        const email = document.getElementById('register-email').value.trim();
-                        const password = document.getElementById('register-password').value;
-                        const passwordConfirm = document.getElementById('register-password-confirm').value;
+                    if (tab === 'login') {
+                            tabLogin.style.color = 'var(--gold)';
+                            tabLogin.style.borderBottom = '2px solid var(--gold)';
+                            tabRegister.style.color = 'var(--muted)';
+                            tabRegister.style.borderBottom = '2px solid transparent';
+                            loginForm.style.display = 'block';
+                            registerForm.style.display = 'none';
+                            forgotForm.style.display = 'none';
+                            authTabs.style.display = 'flex';
+                    } else if (tab === 'register') {
+                            tabRegister.style.color = 'var(--gold)';
+                            tabRegister.style.borderBottom = '2px solid var(--gold)';
+                            tabLogin.style.color = 'var(--muted)';
+                            tabLogin.style.borderBottom = '2px solid transparent';
+                            registerForm.style.display = 'block';
+                            loginForm.style.display = 'none';
+                            forgotForm.style.display = 'none';
+                            authTabs.style.display = 'flex';
+                    }
+            }
 
-                        if (!username || !email || !password) {
-                                displayMessage('請填寫所有必填欄位！', false);
-                                return;
-                        }
+            function showForgotPasswordForm() {
+                    const loginForm = document.getElementById('login-form');
+                    const registerForm = document.getElementById('register-form');
+                    const forgotForm = document.getElementById('forgot-password-form');
+                    const authTabs = document.getElementById('auth-tabs');
 
-                        if (username.length < 4) {
-                                displayMessage('帳號至少需要 4 個字元！', false);
-                                return;
-                        }
+                    hideMessage();
+                    window.clearFormErrors('login-form');
+                    window.clearFormErrors('register-form');
+                    window.clearFormErrors('forgot-password-form');
 
-                        if (password.length < 6) {
-                                displayMessage('密碼至少需要 6 個字元！', false);
-                                return;
-                        }
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'none';
+                    forgotForm.style.display = 'block';
+                    authTabs.style.display = 'none';
+            }
 
-                        if (password !== passwordConfirm) {
-                                displayMessage('兩次輸入的密碼不一致！', false);
-                                return;
-                        }
+            function hideMessage() {
+                    const box = document.getElementById('message-box');
+                    if (box) {
+                            box.style.display = 'none';
+                            box.textContent = '';
+                    }
+            }
 
-                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                        if (!emailRegex.test(email)) {
-                                displayMessage('請輸入有效的電子郵件地址！', false);
-                                return;
-                        }
+            // ----------------------------------------------------------------------
+            // 🎯 函式 1: 註冊用戶 (Register)
+            // ----------------------------------------------------------------------
+            async function registerUser() {
+                    const username = document.getElementById('register-username').value.trim();
+                    const email = document.getElementById('register-email').value.trim();
+                    const password = document.getElementById('register-password').value;
+                    const passwordConfirm = document.getElementById('register-password-confirm').value;
 
-                        displayMessage('正在註冊...', true);
+                    // 清除舊錯誤
+                    window.clearFormErrors('register-form');
+                    hideMessage();
 
-                        try {
-                                const response = await apiFetch(`${API_BASE_URL}/users/register`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ username, email, password })
-                                });
+                    if (!username || !email || !password) {
+                            displayMessage('請填寫所有必填欄位！', false);
+                            return;
+                    }
 
-                                const data = await response.json();
+                    if (username.length < 4) {
+                            displayMessage('帳號至少需要 4 個字元！', false);
+                            return;
+                    }
 
-                                if (response.ok && data.success) {
-                                        displayMessage(`註冊成功！您的會員編號是 ${data.data.memberNo}，請登入。`, true);
-                                        setTimeout(() => switchAuthTab('login'), 2000);
-                                } else {
+                    // 前端先做強度檢查
+                    if (calculatePasswordStrength(password) < 3) {
+                            displayMessage('密碼強度不足！需含大小寫英數，至少8碼。', false);
+                            return;
+                    }
+
+                    if (password !== passwordConfirm) {
+                            displayMessage('兩次輸入的密碼不一致！', false);
+                            return;
+                    }
+
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                            displayMessage('請輸入有效的電子郵件地址！', false);
+                            return;
+                    }
+
+                    displayMessage('正在註冊...', true);
+
+                    try {
+                            const response = await apiFetch(`${API_BASE_URL}/auth/register`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ username, email, password })
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok && data.success) {
+                                    displayMessage(`註冊成功！請登入。`, true);
+                                    setTimeout(() => switchAuthTab('login'), 2000);
+                            } else {
+                                    // [Fix] 優先顯示欄位錯誤
+                                    if (data.fieldErrors) {
+                                        window.showFormErrors('register-form', data.fieldErrors);
+                                        displayMessage('註冊資料有誤，請檢查紅字提示。', false);
+                                    } else {
                                         displayMessage(data.message || '註冊失敗，請稍後再試。', false);
-                                }
+                                    }
+                            }
 
-                        } catch (error) {
-                                displayMessage('網路連線異常，請檢查網路後再試。', false);
-                        }
-                }
+                    } catch (error) {
+                            displayMessage('網路連線異常，請檢查網路後再試。', false);
+                    }
+            }
 
-                // ----------------------------------------------------------------------
-                // 🎯 函式: 忘記密碼
-                // ----------------------------------------------------------------------
-                function forgotPassword() {
-                        displayMessage('此功能開發中，請聯絡客服處理密碼重設事宜。', false);
-                }
+            // ----------------------------------------------------------------------
+            // 🎯 函式: 忘記密碼
+            // ----------------------------------------------------------------------
+            async function forgotPassword() {
+                    const email = document.getElementById('forgot-email').value.trim();
 
-                // ----------------------------------------------------------------------
-                // 🎯 函式 2: 登入用戶 (Login)
-                // ----------------------------------------------------------------------
-                async function loginUser() {
-                        const username = document.getElementById('login-username').value.trim();
-                        const password = document.getElementById('login-password').value;
+                    window.clearFormErrors('forgot-password-form');
+                    hideMessage();
 
-                        if (!username || !password) {
-                                displayMessage('請輸入帳號和密碼！', false);
-                                return;
-                        }
+                    if (!email) {
+                            displayMessage('請輸入您的 Email！', false);
+                            return;
+                    }
 
-                        displayMessage('正在登入...', true);
+                    displayMessage('正在發送重置連結...', true);
 
-                        try {
-                                const response = await apiFetch(`${API_BASE_URL}/users/login`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ username, password })
-                                });
+                    try {
+                            const response = await apiFetch(`${API_BASE_URL}/auth/forgot-password`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ email })
+                            });
 
-                                const data = await response.json(); 
+                            const data = await response.json();
 
-                                if (response.ok && data.token) {
-                                        CURRENT_JWT_TOKEN = data.token;
-                                        localStorage.setItem('jwtToken', data.token);
-                                        localStorage.setItem('username', data.username);
-                                        localStorage.setItem('nickname', data.nickname || '');
-                                        localStorage.setItem('userRole', data.role);
-                                        
-                                        if (data.forcePasswordChange) {
-                                                localStorage.setItem('forcePasswordChange', 'true');
-                                                displayMessage('首次登入，請修改密碼...', true);
-                                                setTimeout(() => {
-                                                        window.location.href = 'dashboard.html?forcePasswordChange=true';
-                                                }, 500);
-                                        } else {
-                                                displayMessage('登入成功！正在導向會員中心...', true);
-                                                setTimeout(() => {
-                                                        if (data.role === 'ADMIN') {
-                                                                window.location.href = 'dashboard.html?admin=true';
-                                                        } else {
-                                                                window.location.href = 'dashboard.html';
-                                                        }
-                                                }, 500);
-                                        }
+                            if (response.ok && data.success) {
+                                    displayMessage('重置連結已發送至您的信箱，請查收。', true);
+                                    setTimeout(() => switchAuthTab('login'), 3000);
+                            } else {
+                                    if (data.fieldErrors) {
+                                        window.showFormErrors('forgot-password-form', data.fieldErrors);
+                                        displayMessage('資料有誤，請檢查紅字提示。', false);
+                                    } else {
+                                        displayMessage(data.message || '發送失敗，請確認 Email 是否正確。', false);
+                                    }
+                            }
+                    } catch (error) {
+                            displayMessage('網路連線異常，請檢查網路後再試。', false);
+                    }
+            }
 
-                                } else {
+            // ----------------------------------------------------------------------
+            // 🎯 函式 2: 登入用戶 (Login)
+            // ----------------------------------------------------------------------
+            async function loginUser() {
+                    const identifier = document.getElementById('login-identifier').value.trim();
+                    const password = document.getElementById('login-password').value;
+
+                    window.clearFormErrors('login-form');
+                    hideMessage();
+
+                    if (!identifier || !password) {
+                            displayMessage('請輸入帳號和密碼！', false);
+                            return;
+                    }
+
+                    displayMessage('正在登入...', true);
+
+                    try {
+                            const response = await apiFetch(`${API_BASE_URL}/auth/login`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ identifier, password })
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok && data.token) {
+                                    CURRENT_JWT_TOKEN = data.token;
+                                    localStorage.setItem('jwtToken', data.token);
+                                    localStorage.setItem('username', data.username);
+                                    localStorage.setItem('nickname', data.nickname || '');
+                                    localStorage.setItem('userRole', data.role);
+
+                                    if (data.forcePasswordChange) {
+                                            localStorage.setItem('forcePasswordChange', 'true');
+                                            displayMessage('首次登入，請修改密碼...', true);
+                                            setTimeout(() => {
+                                                    window.location.href = '/change-password.html';
+                                            }, 500);
+                                    } else {
+                                            displayMessage('登入成功！正在導向會員中心...', true);
+                                            setTimeout(() => {
+                                                    if (data.role === 'ADMIN') {
+                                                            window.location.href = 'dashboard.html?admin=true';
+                                                    } else {
+                                                            window.location.href = 'dashboard.html';
+                                                    }
+                                            }, 500);
+                                    }
+
+                            } else {
+                                    if (data.fieldErrors) {
+                                        window.showFormErrors('login-form', data.fieldErrors);
+                                        displayMessage('登入資料有誤，請檢查紅字提示。', false);
+                                    } else {
                                         displayMessage(data.message || '帳號或密碼錯誤', false);
-                                }
+                                    }
+                            }
 
-                        } catch (error) {
-                                displayMessage('網路連線異常，請檢查網路後再試。', false);
-                        }
-                }
-                
-                // ----------------------------------------------------------------------
-                // 🎯 函式 3: 測試受保護的接口 (不變)
-                // ----------------------------------------------------------------------
-                async function testProtectedApi() {
-                        const token = CURRENT_JWT_TOKEN || localStorage.getItem('jwtToken');
-                        
-                        if (!token) {
-                                displayMessage('請先登入以獲取 Token！', false);
-                                return;
-                        }
+                    } catch (error) {
+                            displayMessage('網路連線異常，請檢查網路後再試。', false);
+                    }
+            }
 
-                        displayMessage('正在使用 Token 呼叫保護接口...', true);
+            // ----------------------------------------------------------------------
+            // 🎯 函式 3: 測試受保護的接口 (不變)
+            // ----------------------------------------------------------------------
+            async function testProtectedApi() {
+                    const token = CURRENT_JWT_TOKEN || localStorage.getItem('jwtToken');
 
-                        try {
-                                const response = await apiFetch(`${API_BASE_URL}/partner/balance`, {
-                                        method: 'GET',
-                                        headers: {
-                                                'Authorization': `Bearer ${token}`, 
-                                                'Content-Type': 'application/json',
-                                        }
-                                });
+                    if (!token) {
+                            displayMessage('請先登入以獲取 Token！', false);
+                            return;
+                    }
 
-                                const text = await response.text();
+                    displayMessage('正在使用 Token 呼叫保護接口...', true);
 
-                                if (response.ok) {
-                                        displayMessage(`✅ 保護接口呼叫成功: ${text.substring(0, 50)}...`, true);
-                                } else {
-                                        displayMessage(`❌ 保護接口呼叫失敗: ${response.status} ${response.statusText}. 請檢查您的 JWT。`, false);
-                                }
+                    try {
+                            const response = await apiFetch(`${API_BASE_URL}/partner/balance`, {
+                                    method: 'GET',
+                                    headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json',
+                                    }
+                            });
 
-                        } catch (error) {
-                                displayMessage('保護接口網路錯誤。', false);
-                        }
-                }
-                // =======================================================
-                // 🚨 JWT 相關函式結束，接下來是您原有的程式碼 🚨
-                // =======================================================
-        
-        
-                //隨機選 slogan
-                const slogans = ["slogan-tech","slogan-biz","slogan-cost"];
-                const pick = slogans[Math.floor(Math.random() * slogans.length)];
-                slogans.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) {
-                  el.style.display = (id === pick) ? "block" : "none";
-                }
-                });
+                            const text = await response.text();
 
-                // 簡單追蹤：把選中的 slogan 存到瀏覽器 console
-                console.log("顯示的 slogan:", pick);
+                            if (response.ok) {
+                                    displayMessage(`✅ 保護接口呼叫成功: ${text.substring(0, 50)}...`, true);
+                            } else {
+                                    displayMessage(`❌ 保護接口呼叫失敗: ${response.status} ${response.statusText}. 請檢查您的 JWT。`, false);
+                            }
 
-                document.addEventListener('DOMContentLoaded', () => {
-                        const menuToggle = document.querySelector('.menu-toggle');
-                        const navLinks = document.getElementById('nav-links');
-                        
-                        // 登入表單 Enter 鍵支援
-                        const loginUsername = document.getElementById('login-username');
-                        const loginPassword = document.getElementById('login-password');
-                        if (loginUsername) loginUsername.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
-                        if (loginPassword) loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
-                        
-                        // 註冊表單 Enter 鍵支援
-                        const registerUsername = document.getElementById('register-username');
-                        const registerEmail = document.getElementById('register-email');
-                        const registerPassword = document.getElementById('register-password');
-                        const registerConfirm = document.getElementById('register-password-confirm');
-                        if (registerUsername) registerUsername.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
-                        if (registerEmail) registerEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
-                        if (registerPassword) registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
-                        if (registerConfirm) registerConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
-                        
-                        // 忘記密碼 Enter 鍵支援
-                        const forgotEmail = document.getElementById('forgot-email');
-                        if (forgotEmail) forgotEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') forgotPassword(); });
-                        
-                        // 確保元素存在
-                        if (!menuToggle || !navLinks) return;
-                        
-                        // 點擊漢堡選單時切換 class
-                        menuToggle.addEventListener('click', () => {
-                                const isOpen = navLinks.classList.toggle('open');
-                                menuToggle.classList.toggle('open');
-                                // 更新無障礙屬性
-                                menuToggle.setAttribute('aria-expanded', isOpen);
+                    } catch (error) {
+                            displayMessage('保護接口網路錯誤。', false);
+                    }
+            }
+            // =======================================================
+            // 🚨 JWT 相關函式結束，接下來是您原有的程式碼 🚨
+            // =======================================================
+
+
+            //隨機選 slogan
+            const slogans = ["slogan-tech","slogan-biz","slogan-cost"];
+            const pick = slogans[Math.floor(Math.random() * slogans.length)];
+            slogans.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+              el.style.display = (id === pick) ? "block" : "none";
+            }
+            });
+
+            // 簡單追蹤：把選中的 slogan 存到瀏覽器 console
+            console.log("顯示的 slogan:", pick);
+
+            document.addEventListener('DOMContentLoaded', () => {
+                    const menuToggle = document.querySelector('.menu-toggle');
+                    const navLinks = document.getElementById('nav-links');
+
+                    // 登入表單 Enter 鍵支援
+                    const loginIdentifier = document.getElementById('login-identifier');
+                    const loginPassword = document.getElementById('login-password');
+                    if (loginIdentifier) loginIdentifier.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
+                    if (loginPassword) loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginUser(); });
+
+                    // 註冊表單 Enter 鍵支援
+                    const registerUsername = document.getElementById('register-username');
+                    const registerEmail = document.getElementById('register-email');
+                    const registerPassword = document.getElementById('register-password');
+                    const registerConfirm = document.getElementById('register-password-confirm');
+                    if (registerUsername) registerUsername.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                    if (registerEmail) registerEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                    if (registerPassword) registerPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+                    if (registerConfirm) registerConfirm.addEventListener('keydown', (e) => { if (e.key === 'Enter') registerUser(); });
+
+                    // 忘記密碼 Enter 鍵支援
+                    const forgotEmail = document.getElementById('forgot-email');
+                    if (forgotEmail) forgotEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') forgotPassword(); });
+
+                    // [New] 註冊頁面密碼強度監聽
+                    const regPassInput = document.getElementById('register-password');
+                    const regMeter = document.getElementById('register-strength-meter');
+                    if (regPassInput && regMeter) {
+                        regPassInput.addEventListener('input', () => {
+                            updateStrengthMeter(regMeter, regPassInput.value);
                         });
+                    }
 
-                        // 點擊選單內的連結後，自動關閉選單
-                        navLinks.querySelectorAll('a').forEach(link => {
-                                link.addEventListener('click', () => {
-                                        navLinks.classList.remove('open');
-                                        menuToggle.classList.remove('open');
-                                        menuToggle.setAttribute('aria-expanded', 'false');
-                                });
-                        });
-                });
-        </script>
+                    // 確保元素存在
+                    if (!menuToggle || !navLinks) return;
+
+                    // 點擊漢堡選單時切換 class
+                    menuToggle.addEventListener('click', () => {
+                            const isOpen = navLinks.classList.toggle('open');
+                            menuToggle.classList.toggle('open');
+                            // 更新無障礙屬性
+                            menuToggle.setAttribute('aria-expanded', isOpen);
+                    });
+
+                    // 點擊選單內的連結後，自動關閉選單
+                    navLinks.querySelectorAll('a').forEach(link => {
+                            link.addEventListener('click', () => {
+                                    navLinks.classList.remove('open');
+                                    menuToggle.classList.remove('open');
+                                    menuToggle.setAttribute('aria-expanded', 'false');
+                            });
+                    });
+            });
+</script>
 </body>
 </html>

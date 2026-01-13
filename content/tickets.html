@@ -1,4 +1,5 @@
 <script src="/js/config.js"></script>
+<script src="/js/pagination.js"></script>
 <style>
     :root { --bg:#091218; --bg2:#0f2027; --accent:#00f6ff; --accent2:#00c9d4; --gold:#ffd700; --text:#eaf2f6; --muted:#a9bac6; --card:rgba(10,22,28,0.55); --border:rgba(255,255,255,0.14); }
     .ticket-card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
@@ -13,6 +14,7 @@
     .ticket-subject { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
     .ticket-meta { display: flex; gap: 20px; color: var(--muted); font-size: 13px; }
     .btn-primary { padding: 10px 20px; background: var(--accent); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .empty-state { text-align: center; padding: 60px 20px; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto; }
     .modal-content { max-width: 600px; margin: 50px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -74,9 +76,11 @@
         <button class="filter-btn" onclick="window.filterTickets('REPLIED', this)">客服已回覆</button>
         <button class="filter-btn" onclick="window.filterTickets('CLOSED', this)">已結案</button>
         <div style="flex: 1;"></div>
-        <input type="date" id="filter-start-date" class="form-input" style="padding: 8px 12px; max-width: 140px;" data-enhance="calendar">
+        <input type="date" id="filter-start-date" class="form-input" style="padding: 8px 12px; max-width: 140px;"
+               data-enhance="calendar">
         <span style="color: var(--muted);">至</span>
-        <input type="date" id="filter-end-date" class="form-input" style="padding: 8px 12px; max-width: 140px;" data-enhance="calendar">
+        <input type="date" id="filter-end-date" class="form-input" style="padding: 8px 12px; max-width: 140px;"
+               data-enhance="calendar">
         <select id="filter-page-size" class="form-input" style="padding: 8px 12px; max-width: 90px;">
             <option value="10">10筆</option>
             <option value="20" selected>20筆</option>
@@ -84,20 +88,27 @@
         </select>
         <button onclick="window.applyFilters()" class="btn-primary" style="padding: 8px 16px;">篩選</button>
     </div>
-    
+
     <div id="tickets-container">
         <div style="text-align: center; padding: 40px;">
-            <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <div class="loading-spinner"
+                 style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
             <p style="color: var(--muted);">載入中...</p>
         </div>
     </div>
+
+    <!-- [New] 分頁容器 -->
+    <div id="pagination-container" class="mt-3"></div>
 </div>
 
 <div id="create-ticket-modal" class="modal">
     <div class="modal-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
             <h3 style="color: var(--gold); margin: 0;">提交新工單</h3>
-            <button onclick="window.closeCreateTicketModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">&times;</button>
+            <button onclick="window.closeCreateTicketModal()"
+                    style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">
+                &times;
+            </button>
         </div>
         <form id="create-ticket-form">
             <div class="form-group">
@@ -112,18 +123,22 @@
             </div>
             <div class="form-group">
                 <label>問題描述</label>
-                <textarea id="ticket-content" class="form-input" placeholder="請詳細描述您遇到的問題..." required></textarea>
+                <textarea id="ticket-content" class="form-input" placeholder="請詳細描述您遇到的問題..."
+                          required></textarea>
             </div>
             <div class="form-group">
                 <label>附件（選填，最多 5 個檔案）</label>
                 <div class="file-upload-area">
-                    <input type="file" id="create-ticket-files" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="window.previewCreateTicketFiles(this)">
+                    <input type="file" id="create-ticket-files" multiple accept="image/*,.pdf,.doc,.docx,.txt"
+                           onchange="window.previewCreateTicketFiles(this)">
                     <label for="create-ticket-files" class="file-upload-btn">+ 選擇檔案</label>
                     <div id="create-ticket-preview" class="upload-preview"></div>
                 </div>
             </div>
-            <div id="ticket-form-message" style="margin-bottom: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
-            <button type="submit" class="btn-primary" style="width: 100%;">送出工單</button>
+            <div id="ticket-form-message"
+                 style="margin-bottom: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+            <button type="submit" id="create-ticket-submit-btn" class="btn-primary" style="width: 100%;">送出工單
+            </button>
         </form>
     </div>
 </div>
@@ -134,7 +149,10 @@
             <h3 style="color: var(--gold); margin: 0; font-size: 16px;" id="detail-ticket-no"></h3>
             <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
                 <span id="ticket-created-time" style="color: var(--muted); font-size: 12px;"></span>
-                <button onclick="window.closeTicketDetailModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+                <button onclick="window.closeTicketDetailModal()"
+                        style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; line-height: 1;">
+                    &times;
+                </button>
             </div>
         </div>
         <div id="ticket-detail-content"></div>
@@ -147,638 +165,665 @@
 </div>
 
 <script>
-(function() {
-    const API_BASE_URL = window.API_BASE_URL || (window.parent && window.parent.API_BASE_URL) || '';
-    const CURRENT_JWT_TOKEN = localStorage.getItem('jwtToken') || '';
-    const apiFetch = window.apiFetch || window.parent.apiFetch || fetch;
-    
-    let categoriesData = [];
-    let allTickets = [];
-    let currentFilter = 'all';
-    let currentPage = 1;
-    let pageSize = 20;
+    (function() {
+        const API_BASE_URL = window.API_BASE_URL || (window.parent && window.parent.API_BASE_URL) || '';
+        const CURRENT_JWT_TOKEN = localStorage.getItem('jwtToken') || '';
+        const apiFetch = window.apiFetch || window.parent.apiFetch || fetch;
 
-    initDefaultDates();
-    loadCategories();
-    loadMyTickets();
+        let categoriesData = [];
+        let currentFilter = 'all';
+        let currentPage = 0;
+        let pageSize = 20;
+        let totalElements = 0;
+        let totalPages = 0;
 
-    function initDefaultDates() {
-        const today = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(today.getDate() - 30);
-        
-        const formatDate = (d) => {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        
-        document.getElementById('filter-start-date').value = formatDate(thirtyDaysAgo);
-        document.getElementById('filter-end-date').value = formatDate(today);
-    }
-    
-    document.getElementById('create-ticket-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await createTicket();
-    });
+        initDefaultDates();
+        loadCategories();
+        loadMyTickets();
 
-    async function loadCategories() {
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/tickets/categories`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    categoriesData = data.data;
-                    populateCategorySelect();
-                }
-            }
-        } catch (error) {
-            console.error('載入分類失敗:', error);
-        }
-    }
+        function initDefaultDates() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
 
-    function populateCategorySelect() {
-        const select = document.getElementById('ticket-category');
-        let html = '<option value="">請選擇類別</option>';
-        categoriesData.forEach(cat => {
-            html += `<option value="${cat.id}">${cat.categoryName}</option>`;
-        });
-        select.innerHTML = html;
-    }
-
-    async function loadMyTickets() {
-        const container = document.getElementById('tickets-container');
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/tickets/my`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    allTickets = data.data || [];
-                    currentPage = 1;
-                    applyFiltersAndRender();
-                }
-            }
-        } catch (error) {
-            container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
-        }
-    }
-
-    window.filterTickets = function(status, btn) {
-        currentFilter = status;
-        currentPage = 1;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        applyFiltersAndRender();
-    };
-
-    window.applyFilters = function() {
-        currentPage = 1;
-        applyFiltersAndRender();
-    };
-
-    window.goToPage = function(page) {
-        currentPage = page;
-        applyFiltersAndRender();
-    };
-
-    function applyFiltersAndRender() {
-        const startDate = document.getElementById('filter-start-date').value;
-        const endDate = document.getElementById('filter-end-date').value;
-        pageSize = parseInt(document.getElementById('filter-page-size').value) || 20;
-
-        let filtered = allTickets;
-
-        if (currentFilter !== 'all') {
-            if (currentFilter === 'WAITING') {
-                filtered = filtered.filter(t => t.status === 'PENDING' || t.status === 'PROCESSING');
-            } else {
-                filtered = filtered.filter(t => t.status === currentFilter);
-            }
-        }
-        if (startDate) {
-            const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0);
-            filtered = filtered.filter(t => new Date(t.createdAt) >= start);
-        }
-        if (endDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            filtered = filtered.filter(t => new Date(t.createdAt) <= end);
-        }
-
-        renderTickets(filtered);
-    }
-
-    function renderTickets(tickets) {
-        const container = document.getElementById('tickets-container');
-        
-        if (!tickets || tickets.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div style="font-size: 60px; margin-bottom: 15px;">📋</div>
-                    <h4 style="color: var(--gold);">尚無工單</h4>
-                    <p style="color: var(--muted); margin-bottom: 20px;">有問題嗎？點擊下方按鈕提交工單</p>
-                    <button onclick="window.showCreateTicketModal()" class="btn-primary">提交新工單</button>
-                </div>
-            `;
-            return;
-        }
-
-        const totalPages = Math.ceil(tickets.length / pageSize);
-        if (currentPage > totalPages) currentPage = totalPages;
-        const startIdx = (currentPage - 1) * pageSize;
-        const endIdx = startIdx + pageSize;
-        const pageData = tickets.slice(startIdx, endIdx);
-
-        const statusMap = window.MEMBER_STATUS_MAP || {
-            'PENDING': { label: '待處理', class: 'status-pending' },
-            'PROCESSING': { label: '處理中', class: 'status-processing' },
-            'REPLIED': { label: '客服已回覆', class: 'status-replied' },
-            'CLOSED': { label: '已結案', class: 'status-closed' }
-        };
-
-        let html = '';
-        pageData.forEach(ticket => {
-            const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
-            const createdAt = new Date(ticket.createdAt).toLocaleDateString('zh-TW');
-
-            html += `
-                <div class="ticket-card" onclick="window.showTicketDetail(${ticket.id})">
-                    <div class="ticket-header">
-                        <span class="ticket-no">${ticket.ticketNo}</span>
-                        <span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span>
-                    </div>
-                    <div class="ticket-subject">${ticket.subject}</div>
-                    <div class="ticket-meta">
-                        <span>類別：${ticket.categoryName}</span>
-                        <span>建立時間：${createdAt}</span>
-                    </div>
-                </div>
-            `;
-        });
-
-        if (totalPages > 1) {
-            html += `<div class="pagination">`;
-            html += `<button onclick="window.goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首頁</button>`;
-            html += `<button onclick="window.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一頁</button>`;
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
-            }
-            html += `<button onclick="window.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一頁</button>`;
-            html += `<button onclick="window.goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末頁</button>`;
-            html += `<span class="pagination-info">共 ${tickets.length} 筆，第 ${currentPage}/${totalPages} 頁</span>`;
-            html += `</div>`;
-        } else if (tickets.length > 0) {
-            html += `<div class="pagination"><span class="pagination-info">共 ${tickets.length} 筆</span></div>`;
-        }
-
-        container.innerHTML = html;
-    }
-
-    let createTicketFiles = [];
-    
-    window.previewCreateTicketFiles = function(input) {
-        const preview = document.getElementById('create-ticket-preview');
-        const files = Array.from(input.files).slice(0, 5);
-        createTicketFiles = files;
-        
-        preview.innerHTML = '';
-        files.forEach((file, index) => {
-            const item = document.createElement('div');
-            item.className = 'upload-preview-item';
-            
-            if (file.type.startsWith('image/')) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                item.appendChild(img);
-            } else {
-                const icon = document.createElement('div');
-                icon.style.cssText = 'width: 50px; height: 50px; background: var(--card); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted);';
-                icon.textContent = file.name.split('.').pop().toUpperCase();
-                item.appendChild(icon);
-            }
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-btn';
-            removeBtn.textContent = '×';
-            removeBtn.onclick = (e) => {
-                e.preventDefault();
-                createTicketFiles = createTicketFiles.filter((_, i) => i !== index);
-                window.previewCreateTicketFiles({ files: createTicketFiles });
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
             };
-            item.appendChild(removeBtn);
-            
-            preview.appendChild(item);
-        });
-    };
-    
-    async function createTicket() {
-        const categoryId = document.getElementById('ticket-category').value;
-        const subject = document.getElementById('ticket-subject').value.trim();
-        const content = document.getElementById('ticket-content').value.trim();
 
-        if (!categoryId || !subject || !content) {
-            showFormMessage('請填寫所有必填欄位', false);
-            return;
+            document.getElementById('filter-start-date').value = formatDate(thirtyDaysAgo);
+            document.getElementById('filter-end-date').value = formatDate(today);
         }
 
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/tickets`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ categoryId: parseInt(categoryId), subject, content })
-            });
+        document.getElementById('create-ticket-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await createTicket();
+        });
 
-            const data = await response.json();
-
-            if (data.success) {
-                const ticketId = data.data.id;
-                
-                if (createTicketFiles.length > 0) {
-                    showFormMessage('正在上傳附件...', true);
-                    for (const file of createTicketFiles) {
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
-                            body: formData
-                        });
+        async function loadCategories() {
+            try {
+                // [Fix] 補上 Authorization Header
+                const response = await apiFetch(`${API_BASE_URL}/tickets/categories`, {
+                    headers: { 'Authorization': `Bearer ${window.getJwtToken()}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data)) {
+                        categoriesData = data;
+                        populateCategorySelect();
+                    } else if (data.success && Array.isArray(data.data)) {
+                        categoriesData = data.data;
+                        populateCategorySelect();
                     }
                 }
-                
-                showFormMessage('工單已送出！', true);
-                createTicketFiles = [];
-                document.getElementById('create-ticket-preview').innerHTML = '';
-                document.getElementById('create-ticket-files').value = '';
-                setTimeout(() => {
-                    window.closeCreateTicketModal();
-                    loadMyTickets();
-                }, 1500);
-            } else {
-                showFormMessage(data.message || '送出失敗', false);
+            } catch (error) {
+                console.error('載入分類失敗:', error);
             }
-        } catch (error) {
-            showFormMessage('網路連線異常', false);
         }
-    }
 
-    function showFormMessage(msg, isSuccess) {
-        const el = document.getElementById('ticket-form-message');
-        el.textContent = msg;
-        el.style.display = 'block';
-        el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
-        el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
-    }
+        function populateCategorySelect() {
+            const select = document.getElementById('ticket-category');
+            let html = '<option value="">請選擇類別</option>';
+            categoriesData.forEach(cat => {
+                const name = cat.categoryName || cat.name || '未命名分類';
+                html += `<option value="${cat.id}">${name}</option>`;
+            });
+            select.innerHTML = html;
+        }
 
-    let pendingFiles = [];
+        // [Refactor] 伺服器端分頁載入
+        async function loadMyTickets(page = 0) {
+            currentPage = page;
+            const container = document.getElementById('tickets-container');
+            const paginationContainer = document.getElementById('pagination-container');
 
-    function renderTicketDetail(responseData, ticketId) {
-        const titleEl = document.getElementById('detail-ticket-no');
-        const content = document.getElementById('ticket-detail-content');
-        const createdTimeEl = document.getElementById('ticket-created-time');
-        
-        const ticket = responseData.ticket;
-        const replies = responseData.replies || [];
-        
-        titleEl.textContent = ticket.ticketNo;
-        createdTimeEl.textContent = new Date(ticket.createdAt).toLocaleString('zh-TW');
-        
-        const statusMap = window.MEMBER_STATUS_MAP || {
-            'PENDING': { label: '待處理', class: 'status-pending' },
-            'PROCESSING': { label: '處理中', class: 'status-processing' },
-            'REPLIED': { label: '客服已回覆', class: 'status-replied' },
-            'CLOSED': { label: '已結案', class: 'status-closed' }
+            // 取得篩選條件
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+            pageSize = parseInt(document.getElementById('filter-page-size').value) || 20;
+
+            // 構建 Query String
+            let queryParams = new URLSearchParams({
+                page: currentPage, // Spring Data Page 從 0 開始
+                size: pageSize
+            });
+
+            try {
+                // [Fix] 使用 window.getJwtToken() 動態獲取 Token
+                const response = await apiFetch(`${API_BASE_URL}/tickets?${queryParams.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${window.getJwtToken()}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        // [Fix] 支援 Page<T> 結構 (相容 ApiResponse 包裹 Page)
+                        const pageData = data.data;
+                        const tickets = pageData.content || [];
+
+                        renderTickets(tickets);
+
+                        // [New] 渲染分頁條
+                        Pagination.render(pageData, 'pagination-container', loadMyTickets);
+                    } else {
+                        container.innerHTML = '<div class="empty-state"><h4 style="color: var(--gold);">尚無工單</h4></div>';
+                        paginationContainer.innerHTML = '';
+                    }
+                } else {
+                    container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+            }
+        }
+
+        window.filterTickets = function(status, btn) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadMyTickets(0); // 重新載入 (觸發後端查詢)
         };
-        const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
-        
-        const ticketAttachments = ticket.attachments || [];
-        const ticketAttachmentsHtml = ticketAttachments.length > 0 ? renderAttachmentsList(ticketAttachments) : '';
-        
-        let repliesHtml = '';
-        if (replies.length === 0) {
-            repliesHtml = '<p style="color: var(--muted); text-align: center;">尚無回覆</p>';
-        } else {
-            replies.forEach(reply => {
-                const isSystemLog = reply.content && reply.content.startsWith('[系統紀錄]');
-                if (isSystemLog && reply.content.includes('變更為「已回覆」')) {
-                    return;
-                }
-                
-                let displayContent = reply.content;
-                if (isSystemLog) {
-                    displayContent = displayContent.replace(/\[系統紀錄\]\s*\S+\s*將/, '[系統紀錄] 客服將');
-                }
-                
-                const replyDate = new Date(reply.createdAt).toLocaleString('zh-TW');
-                const isAdmin = reply.userRole === 'ADMIN';
-                const replyAttachments = reply.attachments || [];
-                const replyAttachmentsHtml = replyAttachments.length > 0 ? renderAttachmentsList(replyAttachments) : '';
-                
-                repliesHtml += `
-                    <div style="background: ${isAdmin ? 'rgba(0, 246, 255, 0.08)' : 'var(--bg)'}; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="font-weight: 600; color: ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">${isAdmin ? '客服回覆' : '您'}</span>
-                            <span style="color: var(--muted); font-size: 12px;">${replyDate}</span>
+
+        window.applyFilters = function() {
+            loadMyTickets(0);
+        };
+
+        function renderTickets(tickets) {
+            const container = document.getElementById('tickets-container');
+
+            if (!tickets || tickets.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 60px; margin-bottom: 15px;">📋</div>
+                        <h4 style="color: var(--gold);">尚無工單</h4>
+                        <p style="color: var(--muted); margin-bottom: 20px;">有問題嗎？點擊下方按鈕提交工單</p>
+                        <button onclick="window.showCreateTicketModal()" class="btn-primary">提交新工單</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const statusMap = window.MEMBER_STATUS_MAP || {
+                'PENDING': { label: '待處理', class: 'status-pending' },
+                'PROCESSING': { label: '處理中', class: 'status-processing' },
+                'REPLIED': { label: '客服已回覆', class: 'status-replied' },
+                'CLOSED': { label: '已結案', class: 'status-closed' }
+            };
+
+            let html = '';
+            tickets.forEach(ticket => {
+                const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
+                const createdAt = new Date(ticket.createdAt).toLocaleDateString('zh-TW');
+                const subject = ticket.title || '無標題';
+                const ticketNo = ticket.id;
+
+                html += `
+                    <div class="ticket-card" onclick="window.showTicketDetail(${ticket.id})">
+                        <div class="ticket-header">
+                            <span class="ticket-no">#${ticketNo}</span>
+                            <span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span>
                         </div>
-                        <p style="white-space: pre-wrap; margin: 0;">${displayContent}</p>
-                        ${replyAttachmentsHtml ? `<div style="margin-top: 10px;">${replyAttachmentsHtml}</div>` : ''}
+                        <div class="ticket-subject">${subject}</div>
+                        <div class="ticket-meta">
+                            <span>建立時間：${createdAt}</span>
+                        </div>
                     </div>
                 `;
             });
-        }
-        
-        pendingFiles = [];
-        
-        content.innerHTML = `
-            <div style="margin-bottom: 12px;">
-                <h4 style="margin-bottom: 6px; font-size: 15px;">${ticket.subject}</h4>
-                <div style="display: flex; gap: 12px; color: var(--muted); font-size: 12px; flex-wrap: wrap;">
-                    <span>類別：${ticket.categoryName || '-'}</span>
-                    <span>狀態：<span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span></span>
-                </div>
-            </div>
-            <div style="background: var(--bg); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                <p style="white-space: pre-wrap; font-size: 13px; margin: 0;">${ticket.content}</p>
-                ${ticketAttachmentsHtml ? `<div style="margin-top: 10px;">${ticketAttachmentsHtml}</div>` : ''}
-            </div>
-            <div>
-                <h5 style="color: var(--accent); margin-bottom: 10px; font-size: 13px;">回覆紀錄</h5>
-                <div class="replies-container" id="member-replies-container">
-                    ${repliesHtml}
-                </div>
-            </div>
-            ${ticket.status !== 'CLOSED' ? `
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-shrink: 0;">
-                <textarea id="reply-content" placeholder="輸入回覆內容..." style="width: 100%; min-height: 60px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; resize: vertical; font-size: 13px;"></textarea>
-                <div style="display: flex; gap: 10px; margin-top: 6px; align-items: flex-start; flex-wrap: wrap;">
-                    <div class="file-upload-area" style="margin: 0;">
-                        <input type="file" id="attachment-input" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="window.handleFileSelect(event)">
-                        <label for="attachment-input" class="file-upload-btn" style="padding: 6px 12px; font-size: 12px;">📎 附件</label>
-                        <span style="color: var(--muted); font-size: 11px;">支援圖片、PDF、文件</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
-                    <div id="upload-preview" class="upload-preview" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
-                    <div style="flex: 1;"></div>
-                    <button onclick="window.submitReplyWithAttachments(${ticketId})" class="btn-primary" style="padding: 8px 16px; font-size: 13px;">送出回覆</button>
-                </div>
-            </div>
-            ` : '<p style="color: var(--muted); text-align: center; margin-top: 15px; font-size: 13px;">此工單已結案</p>'}
-        `;
-        
-        setTimeout(() => {
-            const repliesContainer = document.getElementById('member-replies-container');
-            if (repliesContainer) {
-                repliesContainer.scrollTop = repliesContainer.scrollHeight;
-            }
-        }, 100);
-    }
 
-    function renderAttachmentsList(attachments) {
-        if (!attachments || attachments.length === 0) return '';
-        let html = '<div class="attachment-list">';
-        attachments.forEach(att => {
-            const isImage = att.contentType && att.contentType.startsWith('image/');
-            const downloadUrl = `${API_BASE_URL}/tickets/attachments/${att.id}/download?token=${CURRENT_JWT_TOKEN}`;
-            if (isImage) {
-                html += `
-                    <div class="attachment-item">
-                        <img class="attachment-thumb auth-image" data-auth-url="${downloadUrl}" data-filename="${att.originalFileName}" alt="${att.originalFileName}" style="cursor: pointer;">
-                        <a href="javascript:void(0)" class="auth-image-link" data-auth-url="${downloadUrl}">${att.originalFileName}</a>
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="attachment-item">
-                        <span>📄</span>
-                        <a href="javascript:void(0)" class="auth-download-link" data-auth-url="${downloadUrl}" data-filename="${att.originalFileName}">${att.originalFileName}</a>
-                    </div>
-                `;
-            }
-        });
-        html += '</div>';
-        setTimeout(() => loadAuthImages(), 50);
-        return html;
-    }
-
-    async function loadAuthImages() {
-        const images = document.querySelectorAll('.auth-image[data-auth-url]');
-        for (const img of images) {
-            const url = img.getAttribute('data-auth-url');
-            if (url && !img.src.startsWith('blob:')) {
-                await window.loadImageWithAuth(img, url);
-                img.onclick = () => window.openLightbox(img.src);
-            }
+            container.innerHTML = html;
         }
-        document.querySelectorAll('.auth-image-link[data-auth-url]').forEach(link => {
-            link.onclick = async () => {
-                const url = link.getAttribute('data-auth-url');
-                const blobUrl = await window.getAuthImageUrl(url);
-                if (blobUrl) window.openLightbox(blobUrl);
-            };
-        });
-        document.querySelectorAll('.auth-download-link[data-auth-url]').forEach(link => {
-            link.onclick = async () => {
-                const url = link.getAttribute('data-auth-url');
-                const filename = link.getAttribute('data-filename');
-                try {
-                    const response = await window.apiFetch(url);
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = filename;
-                        a.click();
+
+        let createTicketFiles = [];
+
+        window.previewCreateTicketFiles = function(input) {
+            const preview = document.getElementById('create-ticket-preview');
+            const files = Array.from(input.files).slice(0, 5);
+            createTicketFiles = files;
+
+            preview.innerHTML = '';
+            files.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'upload-preview-item';
+
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    item.appendChild(img);
+                } else {
+                    const icon = document.createElement('div');
+                    icon.style.cssText = 'width: 50px; height: 50px; background: var(--card); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted);';
+                    icon.textContent = file.name.split('.').pop().toUpperCase();
+                    item.appendChild(icon);
+                }
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.textContent = '×';
+                removeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    createTicketFiles = createTicketFiles.filter((_, i) => i !== index);
+                    window.previewCreateTicketFiles({ files: createTicketFiles });
+                };
+                item.appendChild(removeBtn);
+
+                preview.appendChild(item);
+            });
+        };
+
+        async function createTicket() {
+            const submitBtn = document.getElementById('create-ticket-submit-btn');
+            const categorySelect = document.getElementById('ticket-category');
+            const categoryName = categorySelect.options[categorySelect.selectedIndex].text;
+
+            const subject = document.getElementById('ticket-subject').value.trim();
+            const content = document.getElementById('ticket-content').value.trim();
+
+            if (!subject || !content) {
+                showFormMessage('請填寫所有必填欄位', false);
+                return;
+            }
+
+            // [Fix] 鎖定按鈕
+            submitBtn.disabled = true;
+            submitBtn.textContent = '處理中...';
+
+            const fullDescription = `[${categoryName}] ${content}`;
+
+            try {
+                // [Fix] 使用 window.getJwtToken()
+                const response = await apiFetch(`${API_BASE_URL}/tickets`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${window.getJwtToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: subject,
+                        description: fullDescription
+                    })
+                });
+
+                const data = await response.json();
+                const ticketId = data.id || (data.data && data.data.id);
+
+                if (ticketId) {
+                    if (createTicketFiles.length > 0) {
+                        showFormMessage('正在上傳附件...', true);
+                        for (const file of createTicketFiles) {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            // [Fix] 使用 window.getJwtToken()
+                            await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${window.getJwtToken()}` },
+                                body: formData
+                            });
+                        }
                     }
-                } catch (e) { console.error('下載失敗:', e); }
-            };
-        });
-    }
 
-    window.openLightbox = function(imageUrl) {
-        const lightbox = document.getElementById('image-lightbox');
-        const img = document.getElementById('lightbox-image');
-        img.src = imageUrl;
-        lightbox.style.display = 'flex';
-    };
-
-    window.closeLightbox = function() {
-        document.getElementById('image-lightbox').style.display = 'none';
-    };
-
-    window.handleFileSelect = function(event) {
-        const files = Array.from(event.target.files);
-        files.forEach(file => {
-            if (!pendingFiles.find(f => f.name === file.name && f.size === file.size)) {
-                pendingFiles.push(file);
+                    showFormMessage('工單已送出！', true);
+                    createTicketFiles = [];
+                    document.getElementById('create-ticket-preview').innerHTML = '';
+                    document.getElementById('create-ticket-files').value = '';
+                    setTimeout(() => {
+                        window.closeCreateTicketModal();
+                        loadMyTickets();
+                    }, 1500);
+                } else {
+                    showFormMessage(data.message || '送出失敗', false);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '送出工單';
+                }
+            } catch (error) {
+                showFormMessage('網路連線異常', false);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出工單';
             }
-        });
-        updateUploadPreview();
-        event.target.value = '';
-    };
-
-    function updateUploadPreview() {
-        const container = document.getElementById('upload-preview');
-        if (!container) return;
-        let html = '';
-        pendingFiles.forEach((file, index) => {
-            const isImage = file.type.startsWith('image/');
-            if (isImage) {
-                const url = URL.createObjectURL(file);
-                html += `<div class="upload-preview-item"><img src="${url}" alt="${file.name}"><button class="remove-btn" onclick="window.removeFile(${index})">&times;</button></div>`;
-            } else {
-                html += `<div class="upload-preview-item" style="background: var(--bg); padding: 8px; border-radius: 4px;"><span style="font-size: 12px;">📄 ${file.name}</span><button class="remove-btn" onclick="window.removeFile(${index})">&times;</button></div>`;
-            }
-        });
-        container.innerHTML = html;
-    }
-
-    window.removeFile = function(index) {
-        pendingFiles.splice(index, 1);
-        updateUploadPreview();
-    };
-
-    window.submitReplyWithAttachments = async function(ticketId) {
-        const replyContent = document.getElementById('reply-content').value.trim();
-        if (!replyContent && pendingFiles.length === 0) {
-            alert('請輸入回覆內容或選擇附件');
-            return;
         }
 
-        try {
-            let replyId = null;
-            
-            // Always create a reply if there's content OR files
-            // This ensures attachments are associated with a reply, not the ticket
-            const contentToSend = replyContent || (pendingFiles.length > 0 ? '(附件)' : '');
-            
-            if (contentToSend) {
+        function showFormMessage(msg, isSuccess) {
+            const el = document.getElementById('ticket-form-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
+            el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
+        }
+
+        let pendingFiles = [];
+
+        function renderTicketDetail(ticket, ticketId) {
+            const titleEl = document.getElementById('detail-ticket-no');
+            const content = document.getElementById('ticket-detail-content');
+            const createdTimeEl = document.getElementById('ticket-created-time');
+
+            const replies = ticket.replies || [];
+
+            titleEl.textContent = `#${ticket.id}`;
+            createdTimeEl.textContent = new Date(ticket.createdAt).toLocaleString('zh-TW');
+
+            const statusMap = window.MEMBER_STATUS_MAP || {
+                'PENDING': { label: '待處理', class: 'status-pending' },
+                'PROCESSING': { label: '處理中', class: 'status-processing' },
+                'REPLIED': { label: '客服已回覆', class: 'status-replied' },
+                'CLOSED': { label: '已結案', class: 'status-closed' }
+            };
+            const statusInfo = statusMap[ticket.status] || { label: ticket.status, class: '' };
+
+            const ticketAttachments = ticket.attachments || [];
+            const ticketAttachmentsHtml = ticketAttachments.length > 0 ? renderAttachmentsList(ticketAttachments) : '';
+
+            let repliesHtml = '';
+            if (replies.length === 0) {
+                repliesHtml = '<p style="color: var(--muted); text-align: center;">尚無回覆</p>';
+            } else {
+                // [Fix] 前端去重邏輯 (防禦重複顯示)
+                const seenIds = new Set();
+                const uniqueReplies = [];
+                replies.forEach(reply => {
+                    if (!seenIds.has(reply.id)) {
+                        seenIds.add(reply.id);
+                        uniqueReplies.push(reply);
+                    }
+                });
+
+                uniqueReplies.forEach(reply => {
+                    // [Fix] 使用 userRole 判斷身分，而非 senderName
+                    const isAdmin = reply.userRole === 'ADMIN';
+
+                    const replyDate = new Date(reply.createdAt).toLocaleString('zh-TW');
+                    const replyAttachments = reply.attachments || [];
+                    const replyAttachmentsHtml = replyAttachments.length > 0 ? renderAttachmentsList(replyAttachments) : '';
+
+                    repliesHtml += `
+                        <div style="background: ${isAdmin ? 'rgba(0, 246, 255, 0.08)' : 'var(--bg)'}; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600; color: ${isAdmin ? 'var(--accent)' : 'var(--gold)'};">${isAdmin ? '客服回覆' : '您'}</span>
+                                <span style="color: var(--muted); font-size: 12px;">${replyDate}</span>
+                            </div>
+                            <p style="white-space: pre-wrap; margin: 0;">${reply.content}</p>
+                            ${replyAttachmentsHtml ? `<div style="margin-top: 10px;">${replyAttachmentsHtml}</div>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            pendingFiles = [];
+
+            content.innerHTML = `
+                <div style="margin-bottom: 12px;">
+                    <h4 style="margin-bottom: 6px; font-size: 15px;">${ticket.title}</h4>
+                    <div style="display: flex; gap: 12px; color: var(--muted); font-size: 12px; flex-wrap: wrap;">
+                        <span>狀態：<span class="ticket-status ${statusInfo.class}">${statusInfo.label}</span></span>
+                    </div>
+                </div>
+                <div style="background: var(--bg); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <p style="white-space: pre-wrap; font-size: 13px; margin: 0;">${ticket.description}</p>
+                    ${ticketAttachmentsHtml ? `<div style="margin-top: 10px;">${ticketAttachmentsHtml}</div>` : ''}
+                </div>
+                <div>
+                    <h5 style="color: var(--accent); margin-bottom: 10px; font-size: 13px;">回覆紀錄</h5>
+                    <div class="replies-container" id="member-replies-container">
+                        ${repliesHtml}
+                    </div>
+                </div>
+                ${ticket.status !== 'CLOSED' ? `
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-shrink: 0;">
+                    <textarea id="reply-content" placeholder="輸入回覆內容..." style="width: 100%; min-height: 60px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; resize: vertical; font-size: 13px;"></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 6px; align-items: flex-start; flex-wrap: wrap;">
+                        <div class="file-upload-area" style="margin: 0;">
+                            <input type="file" id="attachment-input" multiple accept="image/*,.pdf,.doc,.docx,.txt" onchange="window.handleFileSelect(event)">
+                            <label for="attachment-input" class="file-upload-btn" style="padding: 6px 12px; font-size: 12px;">📎 附件</label>
+                            <span style="color: var(--muted); font-size: 11px;">支援圖片、PDF、文件</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                        <div id="upload-preview" class="upload-preview" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                        <div style="flex: 1;"></div>
+                        <button id="reply-submit-btn" onclick="window.submitReplyWithAttachments(${ticketId})" class="btn-primary" style="padding: 8px 16px; font-size: 13px;">送出回覆</button>
+                    </div>
+                </div>
+                ` : '<p style="color: var(--muted); text-align: center; margin-top: 15px; font-size: 13px;">此工單已結案</p>'}
+            `;
+
+            setTimeout(() => {
+                const repliesContainer = document.getElementById('member-replies-container');
+                if (repliesContainer) {
+                    repliesContainer.scrollTop = repliesContainer.scrollHeight;
+                }
+            }, 100);
+        }
+
+        // [Fix] 實作安全下載 (Blob URL + Header Auth)
+        function renderAttachmentsList(attachments) {
+            if (!attachments || attachments.length === 0) return '';
+            let html = '<div class="attachment-list">';
+            attachments.forEach(att => {
+                // [Fix] 欄位名稱對齊後端 DTO (contentType, originalFileName)
+                const contentType = att.contentType || att.fileType || '';
+                const fileName = att.originalFileName || att.fileName || 'unknown';
+                const downloadUrl = `${API_BASE_URL}/tickets/attachments/${att.id}`; // 移除 ?token=
+
+                const isImage = contentType.startsWith('image/');
+                if (isImage) {
+                    html += `
+                        <div class="attachment-item" style="padding: 0; background: none;">
+                            <img class="attachment-thumb auth-image" data-auth-url="${downloadUrl}" data-filename="${fileName}" alt="${fileName}" style="cursor: pointer;">
+                            <a href="javascript:void(0)" class="auth-image-link" data-auth-url="${downloadUrl}">${fileName}</a>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="attachment-item">
+                            <span>📄</span>
+                            <a href="javascript:void(0)" class="auth-download-link" data-auth-url="${downloadUrl}" data-filename="${fileName}">${fileName}</a>
+                        </div>
+                    `;
+                }
+            });
+            html += '</div>';
+            setTimeout(() => loadAuthImages(), 50);
+            return html;
+        }
+
+        async function loadAuthImages() {
+            // 1. 載入圖片 (縮圖)
+            const images = document.querySelectorAll('.auth-image[data-auth-url]');
+            for (const img of images) {
+                const url = img.getAttribute('data-auth-url');
+                if (url && !img.src.startsWith('blob:')) {
+                    await window.loadImageWithAuth(img, url);
+                    img.onclick = () => window.openLightbox(img.src);
+                }
+            }
+
+            // 2. 圖片連結 (點擊開啟 Lightbox)
+            document.querySelectorAll('.auth-image-link[data-auth-url]').forEach(link => {
+                link.onclick = async () => {
+                    const url = link.getAttribute('data-auth-url');
+                    const blobUrl = await window.getAuthImageUrl(url);
+                    if (blobUrl) window.openLightbox(blobUrl);
+                };
+            });
+
+            // 3. [Fix] 檔案下載 (點擊觸發 fetch -> blob -> download)
+            document.querySelectorAll('.auth-download-link[data-auth-url]').forEach(link => {
+                link.onclick = async () => {
+                    const url = link.getAttribute('data-auth-url');
+                    const filename = link.getAttribute('data-filename');
+                    try {
+                        // [Fix] 使用 apiFetch 並手動帶入 Token (因為 apiFetch 不會自動帶)
+                        const response = await window.apiFetch(url, {
+                            headers: {
+                                'Authorization': `Bearer ${window.getJwtToken()}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const blobUrl = URL.createObjectURL(blob);
+
+                            // 動態建立 <a> 觸發下載
+                            const a = document.createElement('a');
+                            a.href = blobUrl;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+
+                            // 延遲釋放 URL
+                            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                        } else {
+                            alert('下載失敗');
+                        }
+                    } catch (e) {
+                        console.error('下載失敗:', e);
+                        alert('下載失敗，請稍後再試');
+                    }
+                };
+            });
+        }
+
+        window.openLightbox = function(imageUrl) {
+            const lightbox = document.getElementById('image-lightbox');
+            const img = document.getElementById('lightbox-image');
+            img.src = imageUrl;
+            lightbox.style.display = 'flex';
+        };
+
+        window.closeLightbox = function() {
+            document.getElementById('image-lightbox').style.display = 'none';
+        };
+
+        window.handleFileSelect = function(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                if (!pendingFiles.find(f => f.name === file.name && f.size === file.size)) {
+                    pendingFiles.push(file);
+                }
+            });
+            updateUploadPreview();
+            event.target.value = '';
+        };
+
+        function updateUploadPreview() {
+            const container = document.getElementById('upload-preview');
+            if (!container) return;
+            let html = '';
+            pendingFiles.forEach((file, index) => {
+                const isImage = file.type.startsWith('image/');
+                if (isImage) {
+                    const url = URL.createObjectURL(file);
+                    html += `<div class="upload-preview-item"><img src="${url}" alt="${file.name}"><button class="remove-btn" onclick="window.removeFile(${index})">&times;</button></div>`;
+                } else {
+                    html += `<div class="upload-preview-item" style="background: var(--bg); padding: 8px; border-radius: 4px;"><span style="font-size: 12px;">📄 ${file.name}</span><button class="remove-btn" onclick="window.removeFile(${index})">&times;</button></div>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        window.removeFile = function(index) {
+            pendingFiles.splice(index, 1);
+            updateUploadPreview();
+        };
+
+        window.submitReplyWithAttachments = async function(ticketId) {
+            const replyContent = document.getElementById('reply-content').value.trim();
+            const submitBtn = document.getElementById('reply-submit-btn');
+
+            if (!replyContent && pendingFiles.length === 0) {
+                alert('請輸入回覆內容或選擇附件');
+                return;
+            }
+
+            // [Fix] 鎖定按鈕
+            submitBtn.disabled = true;
+            submitBtn.textContent = '傳送中...';
+
+            try {
+                let replyId = null;
+
+                const contentToSend = replyContent || (pendingFiles.length > 0 ? '(附件)' : '');
+
+                if (contentToSend) {
+                    const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ content: contentToSend })
+                    });
+                    const data = await response.json();
+                    if (data.id) {
+                        replyId = data.id;
+                    } else if (data.data && data.data.id) {
+                        replyId = data.data.id;
+                    } else {
+                        alert(data.message || '回覆失敗');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '送出回覆';
+                        return;
+                    }
+                }
+
+                for (const file of pendingFiles) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    if (replyId) {
+                        formData.append('replyId', replyId);
+                    }
+                    await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
+                        body: formData
+                    });
+                }
+
+                pendingFiles = [];
+                window.showTicketDetail(ticketId);
+            } catch (error) {
+                alert('網路連線異常');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送出回覆';
+            }
+        };
+
+        window.showCreateTicketModal = function() {
+            document.getElementById('create-ticket-modal').style.display = 'block';
+        };
+
+        window.closeCreateTicketModal = function() {
+            document.getElementById('create-ticket-modal').style.display = 'none';
+            document.getElementById('create-ticket-form').reset();
+            document.getElementById('ticket-form-message').style.display = 'none';
+        };
+
+        window.showTicketDetail = async function(ticketId) {
+            const modal = document.getElementById('ticket-detail-modal');
+            const content = document.getElementById('ticket-detail-content');
+
+            content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
+            modal.style.display = 'block';
+
+            try {
+                const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.id) {
+                        renderTicketDetail(data, ticketId);
+                        markRepliesAsRead(ticketId);
+                    } else if (data.success && data.data) {
+                        renderTicketDetail(data.data, ticketId);
+                        markRepliesAsRead(ticketId);
+                    }
+                }
+            } catch (error) {
+                content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+            }
+        };
+
+        async function markRepliesAsRead(ticketId) {
+            if (typeof updateUnreadBadge === 'function') {
+                updateUnreadBadge();
+            }
+        }
+
+        window.closeTicketDetailModal = function() {
+            document.getElementById('ticket-detail-modal').style.display = 'none';
+        };
+
+        window.submitReply = async function(ticketId) {
+            const replyContent = document.getElementById('reply-content').value.trim();
+            if (!replyContent) {
+                alert('請輸入回覆內容');
+                return;
+            }
+
+            try {
                 const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ content: contentToSend })
+                    body: JSON.stringify({ content: replyContent })
                 });
+
                 const data = await response.json();
-                if (data.success && data.data) {
-                    replyId = data.data.id;
+                if (data.id || (data.success && data.data)) {
+                    window.showTicketDetail(ticketId);
                 } else {
                     alert(data.message || '回覆失敗');
-                    return;
                 }
+            } catch (error) {
+                alert('網路連線異常');
             }
-
-            for (const file of pendingFiles) {
-                const formData = new FormData();
-                formData.append('file', file);
-                if (replyId) {
-                    formData.append('replyId', replyId);
-                }
-                await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/attachments`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` },
-                    body: formData
-                });
-            }
-
-            pendingFiles = [];
-            window.showTicketDetail(ticketId);
-        } catch (error) {
-            alert('網路連線異常');
-        }
-    };
-
-    // 暴露到全域供 onclick 使用
-    window.showCreateTicketModal = function() {
-        document.getElementById('create-ticket-modal').style.display = 'block';
-    };
-
-    window.closeCreateTicketModal = function() {
-        document.getElementById('create-ticket-modal').style.display = 'none';
-        document.getElementById('create-ticket-form').reset();
-        document.getElementById('ticket-form-message').style.display = 'none';
-    };
-
-    window.showTicketDetail = async function(ticketId) {
-        const modal = document.getElementById('ticket-detail-modal');
-        const content = document.getElementById('ticket-detail-content');
-        
-        content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
-        modal.style.display = 'block';
-
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    renderTicketDetail(data.data, ticketId);
-                    markRepliesAsRead(ticketId);
-                }
-            }
-        } catch (error) {
-            content.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
-        }
-    };
-    
-    async function markRepliesAsRead(ticketId) {
-        try {
-            await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/mark-read`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
-            if (typeof updateUnreadBadge === 'function') {
-                updateUnreadBadge();
-            }
-        } catch (error) {
-            console.error('標記已讀失敗:', error);
-        }
-    }
-
-    window.closeTicketDetailModal = function() {
-        document.getElementById('ticket-detail-modal').style.display = 'none';
-    };
-
-    window.submitReply = async function(ticketId) {
-        const replyContent = document.getElementById('reply-content').value.trim();
-        if (!replyContent) {
-            alert('請輸入回覆內容');
-            return;
-        }
-
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/tickets/${ticketId}/replies`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ content: replyContent })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                window.showTicketDetail(ticketId);
-            } else {
-                alert(data.message || '回覆失敗');
-            }
-        } catch (error) {
-            alert('網路連線異常');
-        }
-    };
-})();
+        };
+    })();
 </script>

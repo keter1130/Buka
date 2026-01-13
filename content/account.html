@@ -4,15 +4,16 @@
 
 <div class="content-card">
     <h3 style="color:var(--gold); margin-bottom: 20px;">個人資料</h3>
-    
+
     <div id="profile-loading" style="text-align: center; padding: 40px;">
-        <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+        <div class="loading-spinner"
+             style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
         <p style="color: var(--muted);">載入中...</p>
     </div>
 
     <div id="profile-content" style="display: none;">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-            <div style="background: var(--card); padding: 25px; border-radius: 12px;">
+            <div id="profile-form" style="background: var(--card); padding: 25px; border-radius: 12px;">
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">會員編號</label>
                     <p id="profile-member-no" style="font-size: 18px; color: var(--gold); font-weight: 600;"></p>
@@ -22,20 +23,25 @@
                     <p id="profile-username" style="font-size: 16px;"></p>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">暱稱 <span style="color: var(--muted); font-size: 11px;">(優先顯示)</span></label>
-                    <input type="text" id="profile-nickname" placeholder="請輸入暱稱（選填）" maxlength="50" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">暱稱 <span
+                            style="color: var(--muted); font-size: 11px;">(優先顯示)</span></label>
+                    <input type="text" id="profile-nickname" name="nickname" placeholder="請輸入暱稱（選填）" maxlength="50"
+                           style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">電子郵件</label>
-                    <input type="email" id="profile-email" placeholder="請輸入電子郵件" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <input type="email" id="profile-email" name="email" placeholder="請輸入電子郵件"
+                           style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">聯絡電話</label>
-                    <input type="tel" id="profile-phone" placeholder="請輸入聯絡電話" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <input type="tel" id="profile-phone" name="phone" placeholder="請輸入聯絡電話"
+                           style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">聯絡地址</label>
-                    <input type="text" id="profile-address" placeholder="請輸入聯絡地址" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                    <input type="text" id="profile-address" name="address" placeholder="請輸入聯絡地址"
+                           style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">點數餘額</label>
@@ -45,176 +51,230 @@
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">註冊時間</label>
                     <p id="profile-created" style="font-size: 14px; color: var(--muted);"></p>
                 </div>
-                <button onclick="window.updateProfile()" style="width: 100%; padding: 12px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">儲存資料</button>
-                <div id="profile-message" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+                <button onclick="window.updateProfile()"
+                        style="width: 100%; padding: 12px; background: var(--gold); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    儲存資料
+                </button>
+                <div id="profile-message"
+                     style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
             </div>
 
-            <div style="background: var(--card); padding: 25px; border-radius: 12px;">
+            <div id="password-form" style="background: var(--card); padding: 25px; border-radius: 12px;">
                 <h4 style="color: var(--accent); margin-bottom: 20px;">修改密碼</h4>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">目前密碼</label>
                     <div style="position: relative;">
-                        <input type="password" id="current-password" placeholder="請輸入目前密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
-                        <button type="button" onclick="window.togglePwd('current-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                        <input type="password" id="current-password" name="oldPassword" placeholder="請輸入目前密碼"
+                               style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                        <button type="button" onclick="togglePasswordVisibility('current-password', this)"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">
+                            👁
+                        </button>
                     </div>
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">新密碼</label>
                     <div style="position: relative;">
-                        <input type="password" id="new-password" placeholder="請輸入新密碼 (至少6字元)" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
-                        <button type="button" onclick="window.togglePwd('new-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                        <input type="password" id="new-password" name="newPassword" placeholder="請輸入新密碼 (至少8字元，含大小寫英數)"
+                               style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                        <button type="button" onclick="togglePasswordVisibility('new-password', this)"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">
+                            👁
+                        </button>
                     </div>
+                    <!-- 強度條容器 -->
+                    <div id="account-strength-meter"></div>
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; color: var(--muted); font-size: 13px; margin-bottom: 5px;">確認新密碼</label>
                     <div style="position: relative;">
-                        <input type="password" id="confirm-password" placeholder="請再次輸入新密碼" style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
-                        <button type="button" onclick="window.togglePwd('confirm-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">👁</button>
+                        <input type="password" id="confirm-password" placeholder="請再次輸入新密碼"
+                               style="width: 100%; padding: 12px; padding-right: 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;">
+                        <button type="button" onclick="togglePasswordVisibility('confirm-password', this)"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px;">
+                            👁
+                        </button>
                     </div>
                 </div>
-                <button onclick="window.changePassword()" style="width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">修改密碼</button>
-                <div id="password-message" style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
+                <button onclick="window.changePassword()"
+                        style="width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    修改密碼
+                </button>
+                <div id="password-message"
+                     style="margin-top: 15px; padding: 10px; border-radius: 6px; text-align: center; display: none;"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-(function() {
-    window.togglePwd = function(inputId, btn) {
-        const input = document.getElementById(inputId);
-        if (input.type === 'password') {
-            input.type = 'text';
-            btn.textContent = '🙈';
-        } else {
-            input.type = 'password';
-            btn.textContent = '👁';
-        }
-    };
+    (function() {
+        // 移除舊的 togglePwd，改用 password-strength.js 的 togglePasswordVisibility
 
-    loadProfile();
+        loadProfile();
 
-    async function loadProfile() {
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/users/profile`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+        // 初始化強度條監聽
+        const newPassInput = document.getElementById('new-password');
+        const meterContainer = document.getElementById('account-strength-meter');
+        if (newPassInput && meterContainer) {
+            newPassInput.addEventListener('input', () => {
+                updateStrengthMeter(meterContainer, newPassInput.value);
             });
+        }
 
-            if (response.ok) {
+        async function loadProfile() {
+            try {
+                const response = await apiFetch(`${API_BASE_URL}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // [Fix] 從 data.data 讀取 UserResponse
+                        const profile = data.data;
+                        document.getElementById('profile-member-no').textContent = profile.memberNo;
+                        document.getElementById('profile-username').textContent = profile.username;
+                        document.getElementById('profile-nickname').value = profile.nickname || '';
+                        document.getElementById('profile-email').value = profile.email || '';
+                        document.getElementById('profile-phone').value = profile.phone || '';
+                        document.getElementById('profile-address').value = profile.address || '';
+                        document.getElementById('profile-points').textContent = parseFloat(profile.pointBalance).toLocaleString() + ' 點';
+                        document.getElementById('profile-created').textContent = new Date(profile.createdAt).toLocaleString('zh-TW');
+
+                        document.getElementById('profile-loading').style.display = 'none';
+                        document.getElementById('profile-content').style.display = 'block';
+                    } else {
+                        console.error('載入個人資料失敗:', data.message);
+                    }
+                }
+            } catch (error) {
+                console.error('載入個人資料失敗:', error);
+            }
+        }
+
+        function showProfileMessage(msg, isSuccess) {
+            const el = document.getElementById('profile-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
+            el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
+        }
+
+        function showPasswordMessage(msg, isSuccess) {
+            const el = document.getElementById('password-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
+            el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
+        }
+
+        window.updateProfile = async function() {
+            const nickname = document.getElementById('profile-nickname').value.trim();
+            const email = document.getElementById('profile-email').value.trim();
+            const phone = document.getElementById('profile-phone').value.trim();
+            const address = document.getElementById('profile-address').value.trim();
+
+            window.clearFormErrors('profile-form');
+            showProfileMessage('', true); // 清除訊息
+            document.getElementById('profile-message').style.display = 'none';
+
+            try {
+                const response = await apiFetch(`${API_BASE_URL}/users/me`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nickname, email, phone, address })
+                });
+
                 const data = await response.json();
-                if (data.success) {
-                    const profile = data.data;
-                    document.getElementById('profile-member-no').textContent = profile.memberNo;
-                    document.getElementById('profile-username').textContent = profile.username;
-                    document.getElementById('profile-nickname').value = profile.nickname || '';
-                    document.getElementById('profile-email').value = profile.email || '';
-                    document.getElementById('profile-phone').value = profile.phone || '';
-                    document.getElementById('profile-address').value = profile.address || '';
-                    document.getElementById('profile-points').textContent = parseFloat(profile.pointBalance).toLocaleString() + ' 點';
-                    document.getElementById('profile-created').textContent = new Date(profile.createdAt).toLocaleString('zh-TW');
-                    
-                    document.getElementById('profile-loading').style.display = 'none';
-                    document.getElementById('profile-content').style.display = 'block';
+
+                if (response.ok && data.success) {
+                    localStorage.setItem('nickname', nickname);
+                    const userGreetingSpan = document.querySelector('#user-greeting span');
+                    if (userGreetingSpan) {
+                        const displayName = nickname || localStorage.getItem('username');
+                        userGreetingSpan.textContent = `歡迎回來, ${displayName}`;
+                    }
+                    showProfileMessage('資料儲存成功！', true);
+                } else {
+                    if (data.fieldErrors) {
+                        window.showFormErrors('profile-form', data.fieldErrors);
+                        showProfileMessage('資料有誤，請檢查紅字提示', false);
+                    } else {
+                        showProfileMessage(data.message || '儲存失敗', false);
+                    }
                 }
+            } catch (error) {
+                showProfileMessage('網路連線異常', false);
             }
-        } catch (error) {
-            console.error('載入個人資料失敗:', error);
-        }
-    }
+        };
 
-    function showProfileMessage(msg, isSuccess) {
-        const el = document.getElementById('profile-message');
-        el.textContent = msg;
-        el.style.display = 'block';
-        el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
-        el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
-    }
+        window.changePassword = async function() {
+            const oldPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
 
-    function showPasswordMessage(msg, isSuccess) {
-        const el = document.getElementById('password-message');
-        el.textContent = msg;
-        el.style.display = 'block';
-        el.style.backgroundColor = isSuccess ? 'rgba(0, 201, 212, 0.15)' : 'rgba(255, 80, 80, 0.15)';
-        el.style.color = isSuccess ? 'var(--accent)' : '#ff5050';
-    }
+            window.clearFormErrors('password-form');
+            showPasswordMessage('', true); // 清除訊息
+            document.getElementById('password-message').style.display = 'none';
 
-    window.updateProfile = async function() {
-        const nickname = document.getElementById('profile-nickname').value.trim();
-        const email = document.getElementById('profile-email').value.trim();
-        const phone = document.getElementById('profile-phone').value.trim();
-        const address = document.getElementById('profile-address').value.trim();
+            if (!oldPassword || !newPassword) {
+                showPasswordMessage('請填寫所有欄位', false);
+                return;
+            }
 
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/users/profile`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ nickname, email, phone, address })
-            });
+            // [Fix] 前端強度檢查
+            if (calculatePasswordStrength(newPassword) < 3) {
+                showPasswordMessage('新密碼強度不足 (需含大小寫英數，至少8碼)', false);
+                return;
+            }
 
-            const data = await response.json();
+            if (newPassword !== document.getElementById('confirm-password').value) {
+                showPasswordMessage('兩次輸入的新密碼不一致', false);
+                return;
+            }
 
-            if (response.ok && data.success) {
-                localStorage.setItem('nickname', nickname);
-                const userGreetingSpan = document.querySelector('#user-greeting span');
-                if (userGreetingSpan) {
-                    const displayName = nickname || localStorage.getItem('username');
-                    userGreetingSpan.textContent = `歡迎回來, ${displayName}`;
+            try {
+                const response = await apiFetch(`${API_BASE_URL}/users/me/password`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+
+                if (response.ok) {
+                    showPasswordMessage('密碼修改成功！請重新登入...', true);
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+
+                    // [Fix] 延遲後強制登出
+                    setTimeout(() => {
+                        if (window.logoutUser) {
+                            window.logoutUser();
+                        } else {
+                            // Fallback
+                            localStorage.removeItem('jwtToken');
+                            window.location.href = 'index.html';
+                        }
+                    }, 1500);
+
+                } else {
+                    const errorData = await response.json();
+                    if (errorData.fieldErrors) {
+                        window.showFormErrors('password-form', errorData.fieldErrors);
+                        showPasswordMessage('資料有誤，請檢查紅字提示', false);
+                    } else {
+                        showPasswordMessage(errorData.message || '密碼修改失敗', false);
+                    }
                 }
-                showProfileMessage('資料儲存成功！', true);
-            } else {
-                showProfileMessage(data.message || '儲存失敗', false);
+            } catch (error) {
+                showPasswordMessage('網路連線異常', false);
             }
-        } catch (error) {
-            showProfileMessage('網路連線異常', false);
-        }
-    };
-
-    window.changePassword = async function() {
-        const currentPassword = document.getElementById('current-password').value;
-        const newPassword = document.getElementById('new-password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            showPasswordMessage('請填寫所有欄位', false);
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            showPasswordMessage('新密碼至少需要 6 個字元', false);
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            showPasswordMessage('兩次輸入的新密碼不一致', false);
-            return;
-        }
-
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/users/change-password`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                showPasswordMessage('密碼修改成功！', true);
-                document.getElementById('current-password').value = '';
-                document.getElementById('new-password').value = '';
-                document.getElementById('confirm-password').value = '';
-            } else {
-                showPasswordMessage(data.message || '密碼修改失敗', false);
-            }
-        } catch (error) {
-            showPasswordMessage('網路連線異常', false);
-        }
-    };
-})();
+        };
+    })();
 </script>

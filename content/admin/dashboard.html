@@ -12,7 +12,7 @@
 
 <div class="content-card">
     <h3 style="margin-bottom: 25px;">管理員儀表板</h3>
-    
+
     <div class="stats-grid" id="admin-stats">
         <div class="stat-card">
             <div class="stat-label">活躍會員</div>
@@ -55,45 +55,48 @@
 </div>
 
 <script>
-(function() {
-    loadDashboardStats();
-    loadPendingTickets();
+    (function() {
+        loadDashboardStats();
+        loadPendingTickets();
 
-    async function loadDashboardStats() {
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/admin/dashboard`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
+        async function loadDashboardStats() {
+            try {
+                // [Fix] 移除多餘的 /api 前綴
+                const response = await apiFetch(`${API_BASE_URL}/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+                });
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    const stats = data.data;
-                    document.getElementById('stat-active-members').textContent = stats.membersWithActiveShields || 0;
-                    document.getElementById('stat-inactive-members').textContent = stats.membersWithoutActiveShields || 0;
-                    document.getElementById('stat-admins').textContent = stats.activeAdmins || 0;
-                    document.getElementById('stat-shields').textContent = stats.activeShields || 0;
-                    document.getElementById('stat-tickets').textContent = stats.pendingTickets || 0;
-                    document.getElementById('stat-recharge').textContent = (parseFloat(stats.monthlyRecharge) || 0).toLocaleString() + ' 點';
-                    document.getElementById('stat-consumption').textContent = (parseFloat(stats.monthlyConsumption) || 0).toLocaleString() + ' 點';
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        const stats = data.data;
+                        document.getElementById('stat-active-members').textContent = stats.membersWithActiveShields || 0;
+                        document.getElementById('stat-inactive-members').textContent = stats.membersWithoutActiveShields || 0;
+                        document.getElementById('stat-admins').textContent = stats.activeAdmins || 0;
+                        document.getElementById('stat-shields').textContent = stats.activeShields || 0;
+                        document.getElementById('stat-tickets').textContent = stats.pendingTickets || 0;
+                        document.getElementById('stat-recharge').textContent = (parseFloat(stats.monthlyRecharge) || 0).toLocaleString() + ' 點';
+                        document.getElementById('stat-consumption').textContent = (parseFloat(stats.monthlyConsumption) || 0).toLocaleString() + ' 點';
+                    }
                 }
+            } catch (error) {
+                console.error('載入統計失敗:', error);
             }
-        } catch (error) {
-            console.error('載入統計失敗:', error);
         }
-    }
 
-    async function loadPendingTickets() {
-        const container = document.getElementById('pending-tickets-list');
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/admin/tickets/pending`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
+        async function loadPendingTickets() {
+            const container = document.getElementById('pending-tickets-list');
+            try {
+                // [Fix] 移除多餘的 /api 前綴
+                const response = await apiFetch(`${API_BASE_URL}/admin/tickets?status=PENDING`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+                });
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    const tickets = data.data;
+                if (response.ok) {
+                    const pageData = await response.json();
+                    // [Fix] 統一從 data.data.content 讀取 List
+                    const tickets = pageData.data ? pageData.data.content : [];
+
                     if (!tickets || tickets.length === 0) {
                         container.innerHTML = '<p style="color: var(--muted); text-align: center;">沒有待處理的工單</p>';
                         return;
@@ -103,8 +106,8 @@
                         html += `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
                                 <div>
-                                    <span style="color: var(--muted); font-family: monospace; font-size: 13px;">${ticket.ticketNo}</span>
-                                    <span style="margin-left: 10px;">${ticket.subject}</span>
+                                    <span style="color: var(--muted); font-family: monospace; font-size: 13px;">#${ticket.id}</span>
+                                    <span style="margin-left: 10px;">${ticket.title}</span>
                                 </div>
                                 <span style="color: var(--muted); font-size: 13px;">${new Date(ticket.createdAt).toLocaleDateString('zh-TW')}</span>
                             </div>
@@ -112,10 +115,9 @@
                     });
                     container.innerHTML = html;
                 }
+            } catch (error) {
+                container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
             }
-        } catch (error) {
-            container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
         }
-    }
-})();
+    })();
 </script>

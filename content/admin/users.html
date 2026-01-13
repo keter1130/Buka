@@ -42,12 +42,12 @@
 
 <div class="content-card">
     <h3 style="margin-bottom: 20px;">會員管理</h3>
-    
+
     <div class="tabs">
-        <button class="tab-btn active" onclick="window.switchTab('members', this)">
+        <button class="tab-btn active" onclick="window.switchTab('USER', this)">
             一般會員<span class="tab-count" id="members-count">0</span>
         </button>
-        <button class="tab-btn" onclick="window.switchTab('admins', this)">
+        <button class="tab-btn" onclick="window.switchTab('ADMIN', this)">
             管理員<span class="tab-count" id="admins-count">0</span>
         </button>
     </div>
@@ -59,22 +59,29 @@
             <option value="50">50筆</option>
             <option value="100">100筆</option>
         </select>
-        <button onclick="window.searchUsers()" class="filter-btn" style="background: var(--accent); color: var(--bg); border-color: var(--accent);">篩選</button>
+        <button onclick="window.searchUsers()" class="filter-btn"
+                style="background: var(--accent); color: var(--bg); border-color: var(--accent);">篩選
+        </button>
     </div>
 
     <div id="users-container">
         <div style="text-align: center; padding: 40px;">
-            <div class="loading-spinner" style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+            <div class="loading-spinner"
+                 style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
             <p style="color: var(--muted);">載入中...</p>
         </div>
     </div>
 </div>
 
-<div id="user-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+<div id="user-detail-modal"
+     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
     <div style="max-width: 600px; margin: 50px auto; padding: 30px; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
             <h3 style="color: var(--gold); margin: 0;">會員詳情</h3>
-            <button onclick="window.closeUserDetailModal()" style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">&times;</button>
+            <button onclick="window.closeUserDetailModal()"
+                    style="background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer;">
+                &times;
+            </button>
         </div>
         <div id="user-detail-content"></div>
     </div>
@@ -84,7 +91,8 @@
     <div class="unlock-modal-content">
         <h4>敏感操作驗證</h4>
         <p>請輸入您的管理員密碼以解鎖敏感操作（5分鐘內有效）</p>
-        <input type="password" id="unlock-password" placeholder="請輸入密碼" onkeypress="if(event.key==='Enter')window.doUnlock()">
+        <input type="password" id="unlock-password" placeholder="請輸入密碼"
+               onkeypress="if(event.key==='Enter')window.doUnlock()">
         <div id="unlock-error" style="color: #ff5050; font-size: 13px; margin-bottom: 10px; display: none;"></div>
         <div class="btn-row">
             <button onclick="window.cancelUnlock()" style="background: var(--card); color: var(--text);">取消</button>
@@ -96,547 +104,570 @@
 <div id="unlock-status" class="unlock-status">已解鎖敏感操作 <span id="unlock-countdown"></span></div>
 
 <script>
-(function() {
-    let allUsers = [];
-    let membersData = [];
-    let adminsData = [];
-    let currentTab = 'members';
-    let currentPage = 1;
-    let pageSize = 20;
-    
-    let unlockExpiresAt = parseInt(sessionStorage.getItem('adminUnlockExpires') || '0');
-    let unlockToken = sessionStorage.getItem('adminUnlockToken') || '';
-    let pendingAction = null;
-    let countdownTimer = null;
-    
-    function isUnlocked() {
-        return unlockExpiresAt > Date.now() && unlockToken;
-    }
-    
-    function getUnlockToken() {
-        return isUnlocked() ? unlockToken : '';
-    }
-    
-    function updateUnlockStatus() {
-        const statusEl = document.getElementById('unlock-status');
-        const countdownEl = document.getElementById('unlock-countdown');
-        if (!statusEl || !countdownEl) return;
-        if (isUnlocked()) {
-            statusEl.style.display = 'block';
-            const remaining = Math.ceil((unlockExpiresAt - Date.now()) / 1000);
-            const mins = Math.floor(remaining / 60);
-            const secs = remaining % 60;
-            countdownEl.textContent = `(${mins}:${secs.toString().padStart(2, '0')})`;
-        } else {
-            statusEl.style.display = 'none';
-            unlockExpiresAt = 0;
-            unlockToken = '';
-            sessionStorage.removeItem('adminUnlockExpires');
-            sessionStorage.removeItem('adminUnlockToken');
+    (function() {
+        let currentRole = 'USER'; // [Fix] 預設角色為 USER
+        let currentPage = 1;
+        let pageSize = 20;
+        let totalElements = 0; // [Fix] 記錄總筆數
+
+        let unlockExpiresAt = parseInt(sessionStorage.getItem('adminUnlockExpires') || '0');
+        let unlockToken = sessionStorage.getItem('adminUnlockToken') || '';
+        let pendingAction = null;
+
+        function isUnlocked() {
+            return unlockExpiresAt > Date.now() && unlockToken;
         }
-    }
-    
-    setInterval(updateUnlockStatus, 1000);
-    updateUnlockStatus();
-    
-    function requireUnlock(callback) {
-        if (isUnlocked()) {
-            callback();
-        } else {
-            pendingAction = callback;
-            document.getElementById('unlock-modal').style.display = 'flex';
-            document.getElementById('unlock-password').value = '';
-            document.getElementById('unlock-error').style.display = 'none';
-            document.getElementById('unlock-password').focus();
+
+        function getUnlockToken() {
+            return isUnlocked() ? unlockToken : '';
         }
-    }
-    
-    window.cancelUnlock = function() {
-        document.getElementById('unlock-modal').style.display = 'none';
-        pendingAction = null;
-    };
-    
-    window.doUnlock = async function() {
-        const password = document.getElementById('unlock-password').value;
-        if (!password) {
-            document.getElementById('unlock-error').textContent = '請輸入密碼';
-            document.getElementById('unlock-error').style.display = 'block';
-            return;
-        }
-        
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/admin/verify-password`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ password })
-            });
-            
-            const data = await response.json();
-            if (response.ok && data.success) {
-                unlockExpiresAt = data.data.expiresAt;
-                unlockToken = data.data.unlockToken;
-                sessionStorage.setItem('adminUnlockExpires', unlockExpiresAt.toString());
-                sessionStorage.setItem('adminUnlockToken', unlockToken);
-                document.getElementById('unlock-modal').style.display = 'none';
-                updateUnlockStatus();
-                if (pendingAction) {
-                    pendingAction();
-                    pendingAction = null;
-                }
+
+        function updateUnlockStatus() {
+            const statusEl = document.getElementById('unlock-status');
+            const countdownEl = document.getElementById('unlock-countdown');
+            if (!statusEl || !countdownEl) return;
+            if (isUnlocked()) {
+                statusEl.style.display = 'block';
+                const remaining = Math.ceil((unlockExpiresAt - Date.now()) / 1000);
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                countdownEl.textContent = `(${mins}:${secs.toString().padStart(2, '0')})`;
             } else {
-                document.getElementById('unlock-error').textContent = data.message || '密碼錯誤';
+                statusEl.style.display = 'none';
+                unlockExpiresAt = 0;
+                unlockToken = '';
+                sessionStorage.removeItem('adminUnlockExpires');
+                sessionStorage.removeItem('adminUnlockToken');
+            }
+        }
+
+        setInterval(updateUnlockStatus, 1000);
+        updateUnlockStatus();
+
+        function requireUnlock(callback) {
+            if (isUnlocked()) {
+                callback();
+            } else {
+                pendingAction = callback;
+                document.getElementById('unlock-modal').style.display = 'flex';
+                document.getElementById('unlock-password').value = '';
+                document.getElementById('unlock-error').style.display = 'none';
+                document.getElementById('unlock-password').focus();
+            }
+        }
+
+        window.cancelUnlock = function() {
+            document.getElementById('unlock-modal').style.display = 'none';
+            pendingAction = null;
+        };
+
+        window.doUnlock = async function() {
+            const password = document.getElementById('unlock-password').value;
+            if (!password || password.trim() === '') {
+                document.getElementById('unlock-error').textContent = '請輸入密碼';
                 document.getElementById('unlock-error').style.display = 'block';
+                return;
             }
-        } catch (error) {
-            document.getElementById('unlock-error').textContent = '網路連線異常';
-            document.getElementById('unlock-error').style.display = 'block';
-        }
-    };
-    
-    window.loadUsers = async function() {
-        const container = document.getElementById('users-container');
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/admin/users?includeAdmin=true`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
 
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    allUsers = data.data || [];
-                    membersData = allUsers.filter(u => u.role === 'USER');
-                    adminsData = allUsers.filter(u => u.role === 'ADMIN');
-                    updateTabCounts();
-                    currentPage = 1;
-                    renderCurrentTab();
-                    checkPendingUserDetail();
-                }
-            }
-        } catch (error) {
-            container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
-        }
-    };
-
-    function updateTabCounts() {
-        document.getElementById('members-count').textContent = membersData.length;
-        document.getElementById('admins-count').textContent = adminsData.length;
-    }
-
-    window.switchTab = function(tab, btn) {
-        currentTab = tab;
-        currentPage = 1;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderCurrentTab();
-    };
-
-    window.goToPage = function(page) {
-        currentPage = page;
-        renderCurrentTab();
-    };
-
-    function renderCurrentTab() {
-        const data = currentTab === 'members' ? membersData : adminsData;
-        const keyword = document.getElementById('user-search').value.trim().toLowerCase();
-        
-        let filtered = data;
-        if (keyword) {
-            filtered = data.filter(u => 
-                (u.memberNo && u.memberNo.toLowerCase().includes(keyword)) ||
-                (u.username && u.username.toLowerCase().includes(keyword)) ||
-                (u.email && u.email.toLowerCase().includes(keyword))
-            );
-        }
-        renderUsers(filtered);
-    }
-    
-    function checkPendingUserDetail() {
-        const pendingId = sessionStorage.getItem('pendingUserDetailId');
-        if (pendingId) {
-            sessionStorage.removeItem('pendingUserDetailId');
-            const user = allUsers.find(u => u.id === parseInt(pendingId));
-            if (user && user.role === 'ADMIN' && currentTab !== 'admins') {
-                document.querySelectorAll('.tab-btn')[1].click();
-            }
-            setTimeout(() => window.showUserDetail(parseInt(pendingId)), 300);
-        }
-    }
-    
-    window.loadUsers();
-    
-    document.getElementById('user-search').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') window.searchUsers();
-    });
-
-    function renderUsers(users) {
-        const container = document.getElementById('users-container');
-        pageSize = parseInt(document.getElementById('page-size').value) || 20;
-        
-        if (!users || users.length === 0) {
-            container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--muted);">沒有找到' + (currentTab === 'members' ? '會員' : '管理員') + '</p>';
-            return;
-        }
-
-        const totalPages = Math.ceil(users.length / pageSize);
-        if (currentPage > totalPages) currentPage = totalPages;
-        const startIdx = (currentPage - 1) * pageSize;
-        const endIdx = startIdx + pageSize;
-        const pageData = users.slice(startIdx, endIdx);
-
-        let html = `
-            <table class="users-table">
-                <thead>
-                    <tr>
-                        <th>會員編號</th>
-                        <th>帳號</th>
-                        <th>電子郵件</th>
-                        <th>點數餘額</th>
-                        <th>狀態</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        pageData.forEach(user => {
-            const isActive = user.status === 'ACTIVE';
-            const isAdmin = user.role === 'ADMIN';
-            const rowClass = isAdmin ? 'admin-row' : '';
-            const adminBadge = isAdmin ? '<span class="admin-badge">管理員</span>' : '';
-            html += `
-                <tr class="${rowClass}">
-                    <td style="font-family: monospace;">${user.memberNo}</td>
-                    <td>${user.username}${adminBadge}</td>
-                    <td style="color: var(--muted);">${user.email || '-'}</td>
-                    <td style="color: var(--gold);">${parseFloat(user.pointBalance || 0).toLocaleString()}</td>
-                    <td class="${isActive ? 'status-active' : 'status-inactive'}">${isActive ? '啟用' : '停用'}</td>
-                    <td>
-                        <button onclick="window.showUserDetail(${user.id})" class="btn-sm btn-outline">詳情</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-        html += '</tbody></table>';
-
-        if (totalPages > 1) {
-            html += `<div class="pagination">`;
-            html += `<button onclick="window.goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首頁</button>`;
-            html += `<button onclick="window.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一頁</button>`;
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
-            }
-            html += `<button onclick="window.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一頁</button>`;
-            html += `<button onclick="window.goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末頁</button>`;
-            html += `<span class="pagination-info">共 ${users.length} 筆，第 ${currentPage}/${totalPages} 頁</span>`;
-            html += `</div>`;
-        } else if (users.length > 0) {
-            html += `<div class="pagination"><span class="pagination-info">共 ${users.length} 筆</span></div>`;
-        }
-
-        container.innerHTML = html;
-    }
-
-    function renderUserDetail(user) {
-        const content = document.getElementById('user-detail-content');
-        const isActive = user.status === 'ACTIVE';
-        const isAdmin = user.role === 'ADMIN';
-        const adminBadge = isAdmin ? '<span class="admin-badge" style="margin-left: 10px;">管理員</span>' : '';
-        
-        const lastLoginAt = user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('zh-TW') : '從未登入';
-        const passwordChangedAt = user.passwordChangedAt ? new Date(user.passwordChangedAt).toLocaleString('zh-TW') : '從未修改';
-        
-        let tempPasswordHtml = '';
-        if (user.tempPassword && !isAdmin) {
-            tempPasswordHtml = `
-                <div class="temp-password-box">
-                    <span style="color: #ffc107;">臨時密碼：</span>
-                    <code id="temp-password-value">${user.tempPassword}</code>
-                    <button class="copy-btn" onclick="window.copyTempPassword()">複製</button>
-                </div>
-            `;
-        }
-        
-        let actionButtonsHtml = '';
-        if (isAdmin) {
-            actionButtonsHtml = `
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" id="adjust-points" placeholder="點數調整 (正數增加/負數扣除)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-                    <button onclick="window.adjustPoints(${user.id})" class="btn-primary">調整</button>
-                </div>
-                <p style="color: var(--muted); font-size: 12px; margin-top: 10px;">管理員帳號無法停用或重設密碼</p>
-            `;
-        } else {
-            actionButtonsHtml = `
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" id="adjust-points" placeholder="點數調整 (正數增加/負數扣除)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-                    <button onclick="window.adjustPoints(${user.id})" class="btn-primary">調整</button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button onclick="window.resetPassword(${user.id})" class="btn-sm btn-outline" style="flex: 1;">重設密碼</button>
-                    <button onclick="window.toggleUserStatus(${user.id}, ${isActive})" class="btn-sm ${isActive ? 'btn-danger' : ''}" style="flex: 1; ${!isActive ? 'background: rgba(80, 255, 150, 0.15); color: #50ff99;' : ''}">${isActive ? '停用帳號' : '啟用帳號'}</button>
-                </div>
-            `;
-        }
-        
-        content.innerHTML = `
-            <div style="display: grid; gap: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--muted);">會員編號</span>
-                    <span style="color: var(--gold); font-weight: 600;">${user.memberNo}${adminBadge}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">帳號</span>
-                    <span>${user.username}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">電子郵件</span>
-                    <span>${user.email || '-'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">點數餘額</span>
-                    <span style="color: var(--gold);">${parseFloat(user.pointBalance || 0).toLocaleString()} 點</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">狀態</span>
-                    <span class="${isActive ? 'status-active' : 'status-inactive'}">${isActive ? '啟用' : '停用'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">註冊時間</span>
-                    <span>${new Date(user.createdAt).toLocaleString('zh-TW')}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">最後登入</span>
-                    <span>${lastLoginAt}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--muted);">密碼修改</span>
-                    <span>${passwordChangedAt}</span>
-                </div>
-            </div>
-            ${tempPasswordHtml}
-            
-            <hr style="border: none; border-top: 1px solid var(--border); margin: 25px 0;">
-            
-            <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h4 style="margin: 0; color: var(--accent);">布卡盾</h4>
-                    <button onclick="window.goToMemberShields(${user.id}, '${user.memberNo}')" class="btn-sm btn-outline" style="font-size: 12px;">查看全部</button>
-                </div>
-                <div id="user-shields-list" style="color: var(--muted); font-size: 14px;">載入中...</div>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h4 style="margin: 0; color: var(--accent);">點數紀錄</h4>
-                    <button onclick="window.goToMemberPoints(${user.id}, '${user.memberNo}')" class="btn-sm btn-outline" style="font-size: 12px;">查看全部</button>
-                </div>
-            </div>
-            
-            <hr style="border: none; border-top: 1px solid var(--border); margin: 25px 0;">
-            <div style="display: grid; gap: 10px;">
-                ${actionButtonsHtml}
-            </div>
-        `;
-        
-        loadUserShields(user.id);
-    }
-    
-    window.copyTempPassword = function() {
-        const value = document.getElementById('temp-password-value').textContent;
-        navigator.clipboard.writeText(value).then(() => {
-            alert('已複製臨時密碼');
-        }).catch(() => {
-            alert('複製失敗，請手動選擇複製');
-        });
-    };
-    
-    window.goToMemberPoints = function(userId, memberNo) {
-        window.closeUserDetailModal();
-        sessionStorage.setItem('pendingPointsUserId', userId);
-        sessionStorage.setItem('pendingPointsMemberNo', memberNo || '');
-        window.location.href = 'dashboard.html?admin=true&page=admin/points';
-    };
-    
-    async function loadUserShields(userId) {
-        const container = document.getElementById('user-shields-list');
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/admin/shields/user/${userId}`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    const shields = data.data;
-                    if (shields.length === 0) {
-                        container.innerHTML = '<p style="color: var(--muted);">尚無布卡盾</p>';
-                    } else {
-                        let html = '<div style="display: grid; gap: 8px;">';
-                        shields.slice(0, 3).forEach(shield => {
-                            const statusClass = shield.status === 'ACTIVE' ? 'status-active' : 'status-inactive';
-                            const statusText = shield.status === 'ACTIVE' ? '啟用' : '到期';
-                            html += `
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border);">
-                                    <div>
-                                        <span style="color: var(--gold); font-family: monospace; margin-right: 10px;">${shield.shieldNo || '-'}</span>
-                                        <span style="font-size: 13px;">${shield.productName || '-'}</span>
-                                    </div>
-                                    <span class="${statusClass}" style="font-size: 12px;">${statusText}</span>
-                                </div>
-                            `;
-                        });
-                        if (shields.length > 3) {
-                            html += `<p style="text-align: center; font-size: 12px; color: var(--muted);">還有 ${shields.length - 3} 個...</p>`;
-                        }
-                        html += '</div>';
-                        container.innerHTML = html;
-                    }
-                }
-            }
-        } catch (error) {
-            container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
-        }
-    }
-    
-    window.goToMemberShields = function(userId, memberNo) {
-        window.closeUserDetailModal();
-        sessionStorage.setItem('pendingShieldsUserId', userId);
-        sessionStorage.setItem('pendingShieldsMemberNo', memberNo || '');
-        window.location.href = 'dashboard.html?admin=true&page=admin/shields';
-    };
-
-    window.searchUsers = function() {
-        currentPage = 1;
-        renderCurrentTab();
-    };
-
-    window.showUserDetail = async function(userId) {
-        const modal = document.getElementById('user-detail-modal');
-        const content = document.getElementById('user-detail-content');
-        
-        content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
-        modal.style.display = 'block';
-
-        try {
-            const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
-                headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    renderUserDetail(data.data);
-                }
-            }
-        } catch (error) {
-            content.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
-        }
-    };
-
-    window.closeUserDetailModal = function() {
-        document.getElementById('user-detail-modal').style.display = 'none';
-    };
-
-    window.adjustPoints = function(userId) {
-        const amount = document.getElementById('adjust-points').value;
-        if (!amount || isNaN(amount)) {
-            alert('請輸入有效的點數');
-            return;
-        }
-
-        const description = prompt('請輸入調整原因：');
-        if (!description) return;
-
-        requireUnlock(async function() {
             try {
-                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/adjust-points`, {
+                const response = await apiFetch(`${API_BASE_URL}/admin/verify-password`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                        'Content-Type': 'application/json',
-                        'X-Unlock-Token': getUnlockToken()
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ amount: parseFloat(amount), description })
+                    body: JSON.stringify({ password: password })
                 });
 
                 const data = await response.json();
-                if (data.success) {
-                    alert('點數調整成功');
-                    window.closeUserDetailModal();
-                    loadUsers();
+                if (response.ok && data.success) {
+                    unlockToken = data.data.sudoToken;
+                    unlockExpiresAt = Date.now() + (data.data.expiresInSeconds * 1000);
+
+                    sessionStorage.setItem('adminUnlockExpires', unlockExpiresAt.toString());
+                    sessionStorage.setItem('adminUnlockToken', unlockToken);
+                    document.getElementById('unlock-modal').style.display = 'none';
+                    updateUnlockStatus();
+                    if (pendingAction) {
+                        pendingAction();
+                        pendingAction = null;
+                    }
                 } else {
-                    alert(data.message || '調整失敗');
+                    document.getElementById('unlock-error').textContent = data.message || '密碼錯誤';
+                    document.getElementById('unlock-error').style.display = 'block';
                 }
             } catch (error) {
-                alert('網路連線異常');
+                console.error('Unlock failed:', error);
+                if (error.message === 'Authentication expired') {
+                    return;
+                }
+                document.getElementById('unlock-error').textContent = error.message || '網路連線異常';
+                document.getElementById('unlock-error').style.display = 'block';
             }
-        });
-    };
+        };
 
-    window.resetPassword = function(userId) {
-        if (!confirm('確定要重設此會員的密碼嗎？')) return;
+        // [Fix] 重構 loadUsers，支援後端分頁與角色篩選
+        window.loadUsers = async function() {
+            const container = document.getElementById('users-container');
+            const keyword = document.getElementById('user-search').value.trim();
+            pageSize = parseInt(document.getElementById('page-size').value) || 20;
 
-        requireUnlock(async function() {
+            // 構建查詢參數
+            const params = new URLSearchParams({
+                page: currentPage - 1, // Spring Data Page 從 0 開始
+                size: pageSize,
+                role: currentRole, // [Fix] 傳入當前 Tab 的角色
+                sort: 'createdAt,desc'
+            });
+
+            if (keyword) {
+                params.append('q', keyword);
+            }
+
             try {
-                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                        'X-Unlock-Token': getUnlockToken()
-                    }
+                const response = await apiFetch(`${API_BASE_URL}/admin/users?${params.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
                 });
 
-                const data = await response.json();
-                if (data.success) {
-                    const tempPassword = data.data?.tempPassword || data.tempPassword;
-                    if (tempPassword) {
-                        alert(`密碼已重設成功！\n\n臨時密碼：${tempPassword}\n\n請將此密碼提供給會員登入。`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        const pageData = data.data;
+
+                        // [Fix] 適配 Spring Data Web Support (VIA_DTO) 結構
+                        // 結構: { content: [...], page: { totalElements, totalPages, ... } }
+                        let content = [];
+                        let totalPages = 0;
+
+                        if (pageData.page) {
+                            // 新結構 (VIA_DTO)
+                            content = pageData.content || [];
+                            totalElements = pageData.page.totalElements;
+                            totalPages = pageData.page.totalPages;
+                        } else {
+                            // 舊結構 (扁平)
+                            content = pageData.content || [];
+                            totalElements = pageData.totalElements || 0;
+                            totalPages = pageData.totalPages || 0;
+                        }
+
+                        // 更新 Tab 計數
+                        if (currentRole === 'USER') {
+                            document.getElementById('members-count').textContent = totalElements;
+                        } else {
+                            document.getElementById('admins-count').textContent = totalElements;
+                        }
+
+                        renderUsers(content, totalPages);
+                        checkPendingUserDetail();
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<p style="color: #ff5050; text-align: center;">載入失敗</p>';
+            }
+        };
+
+        // [Fix] 切換 Tab 時更新 currentRole 並重新載入
+        window.switchTab = function(role, btn) {
+            currentRole = role;
+            currentPage = 1;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadUsers();
+        };
+
+        window.goToPage = function(page) {
+            currentPage = page;
+            loadUsers();
+        };
+
+        function checkPendingUserDetail() {
+            const pendingId = sessionStorage.getItem('pendingUserDetailId');
+            if (pendingId) {
+                sessionStorage.removeItem('pendingUserDetailId');
+                // 這裡無法簡單判斷 pendingId 的角色，只能嘗試載入詳情
+                setTimeout(() => window.showUserDetail(parseInt(pendingId)), 300);
+            }
+        }
+
+        // 初始載入
+        window.loadUsers();
+
+        document.getElementById('user-search').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') window.searchUsers();
+        });
+
+        // [Fix] 渲染邏輯調整，接收 totalPages
+        function renderUsers(users, totalPages) {
+            const container = document.getElementById('users-container');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--muted);">沒有找到' + (currentRole === 'USER' ? '會員' : '管理員') + '</p>';
+                return;
+            }
+
+            let html = `
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>會員編號</th>
+                            <th>帳號</th>
+                            <th>電子郵件</th>
+                            <th>點數餘額</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            users.forEach(user => {
+                const isActive = user.status === 'ACTIVE';
+                const isAdmin = user.role === 'ADMIN';
+                const rowClass = isAdmin ? 'admin-row' : '';
+                const adminBadge = isAdmin ? '<span class="admin-badge">管理員</span>' : '';
+                html += `
+                    <tr class="${rowClass}">
+                        <td style="font-family: monospace;">${user.memberNo}</td>
+                        <td>${user.username}${adminBadge}</td>
+                        <td style="color: var(--muted);">${user.email || '-'}</td>
+                        <td style="color: var(--gold);">${parseFloat(user.pointBalance || 0).toLocaleString()}</td>
+                        <td class="${isActive ? 'status-active' : 'status-inactive'}">${isActive ? '啟用' : '停用'}</td>
+                        <td>
+                            <button onclick="window.showUserDetail(${user.id})" class="btn-sm btn-outline">詳情</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+
+            if (totalPages > 1) {
+                html += `<div class="pagination">`;
+                html += `<button onclick="window.goToPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首頁</button>`;
+                html += `<button onclick="window.goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一頁</button>`;
+
+                // 簡單的分頁邏輯：顯示當前頁前後各 2 頁
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+                }
+
+                html += `<button onclick="window.goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一頁</button>`;
+                html += `<button onclick="window.goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末頁</button>`;
+                html += `<span class="pagination-info">共 ${totalElements} 筆，第 ${currentPage}/${totalPages} 頁</span>`;
+                html += `</div>`;
+            } else if (users.length > 0) {
+                html += `<div class="pagination"><span class="pagination-info">共 ${totalElements} 筆</span></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderUserDetail(user) {
+            const content = document.getElementById('user-detail-content');
+            const isActive = user.status === 'ACTIVE';
+            const isAdmin = user.role === 'ADMIN';
+            const adminBadge = isAdmin ? '<span class="admin-badge" style="margin-left: 10px;">管理員</span>' : '';
+
+            const lastLoginAt = user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('zh-TW') : '從未登入';
+            const passwordChangedAt = user.passwordChangedAt ? new Date(user.passwordChangedAt).toLocaleString('zh-TW') : '從未修改';
+
+            let tempPasswordHtml = '';
+            if (user.tempPassword && !isAdmin) {
+                tempPasswordHtml = `
+                    <div class="temp-password-box">
+                        <span style="color: #ffc107;">臨時密碼：</span>
+                        <code id="temp-password-value">${user.tempPassword}</code>
+                        <button class="copy-btn" onclick="window.copyTempPassword()">複製</button>
+                    </div>
+                `;
+            }
+
+            let actionButtonsHtml = '';
+            if (isAdmin) {
+                actionButtonsHtml = `
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="adjust-points" placeholder="點數調整 (正數增加/負數扣除)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                        <button onclick="window.adjustPoints(${user.id})" class="btn-primary">調整</button>
+                    </div>
+                    <p style="color: var(--muted); font-size: 12px; margin-top: 10px;">管理員帳號無法停用或重設密碼</p>
+                `;
+            } else {
+                actionButtonsHtml = `
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="adjust-points" placeholder="點數調整 (正數增加/負數扣除)" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                        <button onclick="window.adjustPoints(${user.id})" class="btn-primary">調整</button>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="window.resetPassword(${user.id})" class="btn-sm btn-outline" style="flex: 1;">重設密碼</button>
+                        <button onclick="window.toggleUserStatus(${user.id}, ${isActive})" class="btn-sm ${isActive ? 'btn-danger' : ''}" style="flex: 1; ${!isActive ? 'background: rgba(80, 255, 150, 0.15); color: #50ff99;' : ''}">${isActive ? '停用帳號' : '啟用帳號'}</button>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = `
+                <div style="display: grid; gap: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--muted);">會員編號</span>
+                        <span style="color: var(--gold); font-weight: 600;">${user.memberNo}${adminBadge}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">帳號</span>
+                        <span>${user.username}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">電子郵件</span>
+                        <span>${user.email || '-'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">點數餘額</span>
+                        <span style="color: var(--gold);">${parseFloat(user.pointBalance || 0).toLocaleString()} 點</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">狀態</span>
+                        <span class="${isActive ? 'status-active' : 'status-inactive'}">${isActive ? '啟用' : '停用'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">註冊時間</span>
+                        <span>${new Date(user.createdAt).toLocaleString('zh-TW')}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">最後登入</span>
+                        <span>${lastLoginAt}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">密碼修改</span>
+                        <span>${passwordChangedAt}</span>
+                    </div>
+                </div>
+                ${tempPasswordHtml}
+
+                <hr style="border: none; border-top: 1px solid var(--border); margin: 25px 0;">
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: var(--accent);">布卡盾</h4>
+                        <button onclick="window.goToMemberShields(${user.id}, '${user.memberNo}')" class="btn-sm btn-outline" style="font-size: 12px;">查看全部</button>
+                    </div>
+                    <div id="user-shields-list" style="color: var(--muted); font-size: 14px;">載入中...</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: var(--accent);">點數紀錄</h4>
+                        <button onclick="window.goToMemberPoints(${user.id}, '${user.memberNo}')" class="btn-sm btn-outline" style="font-size: 12px;">查看全部</button>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border); margin: 25px 0;">
+                <div style="display: grid; gap: 10px;">
+                    ${actionButtonsHtml}
+                </div>
+            `;
+
+            loadUserShields(user.id);
+        }
+
+        window.copyTempPassword = function() {
+            const value = document.getElementById('temp-password-value').textContent;
+            navigator.clipboard.writeText(value).then(() => {
+                alert('已複製臨時密碼');
+            }).catch(() => {
+                alert('複製失敗，請手動選擇複製');
+            });
+        };
+
+        window.goToMemberPoints = function(userId, memberNo) {
+            window.closeUserDetailModal();
+            sessionStorage.setItem('pendingPointsUserId', userId);
+            sessionStorage.setItem('pendingPointsMemberNo', memberNo || '');
+            window.location.href = 'dashboard.html?admin=true&page=admin/points';
+        };
+
+        async function loadUserShields(userId) {
+            const container = document.getElementById('user-shields-list');
+            try {
+                // [Fix] 使用新版 API 路徑 /api/admin/shields?userId=...
+                const response = await apiFetch(`${API_BASE_URL}/admin/shields?userId=${userId}`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // [Fix] 統一從 data.data.content 讀取 List
+                        const shields = data.data.content || [];
+                        if (shields.length === 0) {
+                            container.innerHTML = '<p style="color: var(--muted);">尚無布卡盾</p>';
+                        } else {
+                            let html = '<div style="display: grid; gap: 8px;">';
+                            shields.slice(0, 3).forEach(shield => {
+                                const statusClass = shield.status === 'ACTIVE' ? 'status-active' : 'status-inactive';
+                                const statusText = shield.status === 'ACTIVE' ? '啟用' : '到期';
+                                html += `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border);">
+                                        <div>
+                                            <span style="color: var(--gold); font-family: monospace; margin-right: 10px;">${shield.shieldNo || '-'}</span>
+                                            <span style="font-size: 13px;">${shield.productName || '-'}</span>
+                                        </div>
+                                        <span class="${statusClass}" style="font-size: 12px;">${statusText}</span>
+                                    </div>
+                                `;
+                            });
+                            if (shields.length > 3) {
+                                html += `<p style="text-align: center; font-size: 12px; color: var(--muted);">還有 ${shields.length - 3} 個...</p>`;
+                            }
+                            html += '</div>';
+                            container.innerHTML = html;
+                        }
+                    }
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+            }
+        }
+
+        window.goToMemberShields = function(userId, memberNo) {
+            window.closeUserDetailModal();
+            sessionStorage.setItem('pendingShieldsUserId', userId);
+            sessionStorage.setItem('pendingShieldsMemberNo', memberNo || '');
+            window.location.href = 'dashboard.html?admin=true&page=admin/shields';
+        };
+
+        window.searchUsers = function() {
+            currentPage = 1;
+            loadUsers(); // [Fix] 呼叫 loadUsers 而非 renderCurrentTab
+        };
+
+        window.showUserDetail = async function(userId) {
+            const modal = document.getElementById('user-detail-modal');
+            const content = document.getElementById('user-detail-content');
+
+            content.innerHTML = '<p style="text-align: center; color: var(--muted);">載入中...</p>';
+            modal.style.display = 'block';
+
+            try {
+                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${CURRENT_JWT_TOKEN}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        // [Fix] 統一從 data.data 讀取 DTO
+                        renderUserDetail(data.data);
+                    }
+                }
+            } catch (error) {
+                content.innerHTML = '<p style="color: #ff5050;">載入失敗</p>';
+            }
+        };
+
+        window.closeUserDetailModal = function() {
+            document.getElementById('user-detail-modal').style.display = 'none';
+        };
+
+        window.adjustPoints = function(userId) {
+            const amount = document.getElementById('adjust-points').value;
+            if (!amount || isNaN(amount)) {
+                alert('請輸入有效的點數');
+                return;
+            }
+
+            const description = prompt('請輸入調整原因：');
+            if (!description) return;
+
+            requireUnlock(async function() {
+                try {
+                    const response = await apiFetch(`${API_BASE_URL}/admin/points/adjust`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                            'Content-Type': 'application/json',
+                            'X-Sudo-Token': getUnlockToken() // [Fix] Header 名稱修正
+                        },
+                        body: JSON.stringify({ userId: userId, amount: parseFloat(amount), description })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('點數調整成功');
+                        window.closeUserDetailModal();
+                        loadUsers();
                     } else {
-                        alert('密碼已重設，臨時密碼將發送至會員信箱');
+                        alert(data.message || '調整失敗');
                     }
-                    window.closeUserDetailModal();
-                    window.searchUsers();
-                } else {
-                    alert(data.message || '重設失敗');
+                } catch (error) {
+                    alert('網路連線異常');
                 }
-            } catch (error) {
-                alert('網路連線異常');
-            }
-        });
-    };
+            });
+        };
 
-    window.toggleUserStatus = function(userId, currentlyActive) {
-        const action = currentlyActive ? '停用' : '啟用';
-        if (!confirm(`確定要${action}此帳號嗎？`)) return;
+        window.resetPassword = function(userId) {
+            if (!confirm('確定要重設此會員的密碼嗎？')) return;
 
-        requireUnlock(async function() {
-            try {
-                const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/toggle-status`, {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
-                        'X-Unlock-Token': getUnlockToken()
+            requireUnlock(async function() {
+                try {
+                    const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/reset-password`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                            'X-Sudo-Token': getUnlockToken() // [Fix] Header 名稱修正
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        const tempPassword = data.data?.tempPassword || data.tempPassword;
+                        if (tempPassword) {
+                            alert(`密碼已重設成功！\n\n臨時密碼：${tempPassword}\n\n請將此密碼提供給會員登入。`);
+                        } else {
+                            alert('密碼已重設，臨時密碼將發送至會員信箱');
+                        }
+                        window.closeUserDetailModal();
+                        window.searchUsers();
+                    } else {
+                        alert(data.message || '重設失敗');
                     }
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert(`帳號已${action}`);
-                    window.closeUserDetailModal();
-                    loadUsers();
-                } else {
-                    alert(data.message || '操作失敗');
+                } catch (error) {
+                    alert('網路連線異常');
                 }
-            } catch (error) {
-                alert('網路連線異常');
-            }
-        });
-    };
-})();
+            });
+        };
+
+        window.toggleUserStatus = function(userId, currentlyActive) {
+            const action = currentlyActive ? '停用' : '啟用';
+            const newStatus = currentlyActive ? 'SUSPENDED' : 'ACTIVE';
+            if (!confirm(`確定要${action}此帳號嗎？`)) return;
+
+            requireUnlock(async function() {
+                try {
+                    const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${CURRENT_JWT_TOKEN}`,
+                            'Content-Type': 'application/json',
+                            'X-Sudo-Token': getUnlockToken() // [Fix] Header 名稱修正
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        alert(`帳號已${action}`);
+                        window.closeUserDetailModal();
+                        loadUsers();
+                    } else {
+                        alert(data.message || '操作失敗');
+                    }
+                } catch (error) {
+                    alert('網路連線異常');
+                }
+            });
+        };
+    })();
 </script>
