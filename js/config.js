@@ -2,6 +2,7 @@
     const hostname = window.location.hostname;
     
     // [Config] 設定 API 基礎路徑
+    // [Fix] Dev 環境 (localhost) 也應使用 /api，而非空字串
     if (hostname === 'buka.tw' || hostname === 'www.buka.tw') {
         window.API_BASE_URL = 'https://api.buka.tw/api';
     } else {
